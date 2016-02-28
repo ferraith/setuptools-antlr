@@ -1,4 +1,4 @@
 antlr-distutils
 ===============
 
-A set of distutils extensions for generating ANTLR based parsers
+A distutils extension for generating ANTLR based parsers.
