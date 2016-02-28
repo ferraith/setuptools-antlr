@@ -1,6 +1,10 @@
-# Byte-compiled / optimized / DLL files
+# Byte-compiled / optimized
 __pycache__/
 *.py[cod]
+
+# virtual environment
+env/
+example/env/
 
 # Jetbrains IDE project files
 .idea/
