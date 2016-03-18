@@ -1,4 +1,4 @@
-"""Setup script for hello."""
+"""Setup script for hello example."""
 from distutils.command.build import build as _build
 from setuptools import setup, find_packages
 from antlr_distutils.build_antlr import build_antlr
