@@ -5,7 +5,7 @@ from os import environ
 from os.path import join
 from re import compile
 from shutil import which
-from subprocess import check_call, CalledProcessError, run, PIPE, STDOUT
+from subprocess import run, PIPE, STDOUT
 from antlr_distutils import __path__
 
 ANTLR_JAR = 'antlr-4.5.2-complete.jar'
@@ -23,7 +23,7 @@ class build_antlr(Command):
         ('no-listener', None, "don't generate parse tree listener"),
         ('visitor', None, "generate parse tree visitor"),
         ('no-visitor', None, "don't generate parse tree visitor [default]")
-        ]
+    ]
 
     boolean_options = ['listener', 'no-listener', 'visitor', 'no-visitor']
     # TODO: check if negative options are working
@@ -38,9 +38,8 @@ class build_antlr(Command):
     def finalize_options(self):
         # Find out the build directories, ie. where to install from.
         self.set_undefined_options('build', ('build_lib', 'build_lib'))
-        # TODO: assert if grammar isn't specified; should we search for a grammar?
-        if self.grammar is None:
-            self.grammar = 'hello/dsl/Hello.g4'
+        # TODO: instead of asserting search for all root grammars
+        assert self.grammar is not None, 'No grammar passed to build_antlr command.'
         if self.listener is None:
             self.listener = True
         if self.visitor is None:
@@ -63,7 +62,7 @@ class build_antlr(Command):
         return None
 
     def _validate_java(self, executable):
-        result = run([executable, '-vesion'], stdout=PIPE, stderr=STDOUT, universal_newlines=True)
+        result = run([executable, '-version'], stdout=PIPE, stderr=STDOUT, universal_newlines=True)
 
         if result.returncode == 0:
             version_regex = compile('(\d+).(\d+).(\d+)_(\d+)')
@@ -89,9 +88,6 @@ class build_antlr(Command):
         # TODO: determine python package name and create __init__ file
 
         # TODO: create java call list based on user options
-        try:
-            # TODO: should stdout and stderror handled in a different way?
-            check_call([java_exe, '-jar', antlr_jar, '-o', self.build_lib, '-listener',
-                        '-visitor', '-Dlanguage=Python3', self.grammar])
-        except CalledProcessError:
-            exit(1)
+
+        # TODO: should stdout and stderror handled in a different way?
+        run([java_exe, '-jar', antlr_jar, '-o', self.build_lib, '-listener', '-visitor', '-Dlanguage=Python3', self.grammar])
