@@ -1,18 +1,18 @@
 """Implements a distutils command 'build_antlr'."""
 
 from distutils.core import Command
-from os import environ
-from os.path import join
+from distutils.version import LooseVersion
+from os import environ, listdir
+from os.path import isfile, join
 from re import compile
 from shutil import which
 from subprocess import run, PIPE, STDOUT
 from antlr_distutils import __path__
 
-ANTLR_JAR = 'antlr-4.5.2-complete.jar'
-MIN_JAVA_VERSION = {'major': 1, 'minor': 6, 'patch': 0, 'build': 0}
-
 
 class build_antlr(Command):
+    MIN_JAVA_VERSION = '1.6.0'
+    MIN_ANTLR_VERSION = '4.0'
 
     description = 'generate a parser based on ANTLR'
 
@@ -46,16 +46,16 @@ class build_antlr(Command):
             self.visitor = True
 
     def _find_java(self):
-        # First check if a working Java is in JAVA_HOME
+        # First check if a working Java is set in JAVA_HOME
         if 'JAVA_HOME' in environ:
             java_bin_dir = join(environ['JAVA_HOME'], 'bin')
             java_exe = which('java', path=java_bin_dir)
-            if self._validate_java(java_exe):
+            if java_exe and self._validate_java(java_exe):
                 return java_exe
 
         # If Java wasn't found in JAVA_HOME fallback to PATH
         java_exe = which('java', path=None)
-        if self._validate_java(java_exe):
+        if java_exe and self._validate_java(java_exe):
             return java_exe
 
         # Java wasn't found on the system
@@ -65,25 +65,32 @@ class build_antlr(Command):
         result = run([executable, '-version'], stdout=PIPE, stderr=STDOUT, universal_newlines=True)
 
         if result.returncode == 0:
-            version_regex = compile('(\d+).(\d+).(\d+)_(\d+)')
-
-            # Get major and minor release
+            version_regex = compile('\d+(.\d+){2}(_\d+)?')
             version_match = version_regex.search(result.stdout)
-            major = int(version_match.group(1))
-            minor = int(version_match.group(2))
 
-            # Check if Java has at least minimum required version
-            if major >= MIN_JAVA_VERSION['major'] and minor >= MIN_JAVA_VERSION['minor']:
-                return True
+            if version_match:
+                # Create normalized versions containing only valid chars
+                validated_version = LooseVersion(version_match.group(0).replace('_', '.'))
+                min_version = LooseVersion(self.MIN_JAVA_VERSION.replace('_', '.'))
+
+                return validated_version >= min_version
 
         return False
+
+    def find_antlr(self, path):
+        antlr_jar_regex = compile('^antlr-(\d+)(.\d+){2}-complete.jar$')
+        # Search for all _files_ matching regex in path
+        antlr_jar_matches = [element for element in listdir(path) if isfile(join(path, element)) and
+                             antlr_jar_regex.match(element) is not None]
+        # If more than one antlr jar was found return the first one
+        return antlr_jar_matches[0]
 
     def run(self):
         java_exe = self._find_java()
         assert java_exe is not None, "No compatible JRE was found on the system."
 
-        # TODO: search antlr jar
-        antlr_jar = join(__path__[0], 'lib', ANTLR_JAR)
+        antlr_lib_path = join(__path__[0], 'lib')
+        antlr_jar = self.find_antlr(antlr_lib_path)
 
         # TODO: determine python package name and create __init__ file
 
