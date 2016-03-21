@@ -11,8 +11,8 @@ from antlr_distutils import __path__
 
 
 class build_antlr(Command):
-    MIN_JAVA_VERSION = '1.6.0'
-    MIN_ANTLR_VERSION = '4.0'
+    _MIN_JAVA_VERSION = '1.6.0'
+    _EXT_LIB_DIR = 'lib'
 
     description = 'generate a parser based on ANTLR'
 
@@ -71,26 +71,31 @@ class build_antlr(Command):
             if version_match:
                 # Create normalized versions containing only valid chars
                 validated_version = LooseVersion(version_match.group(0).replace('_', '.'))
-                min_version = LooseVersion(self.MIN_JAVA_VERSION.replace('_', '.'))
+                min_version = LooseVersion(self._MIN_JAVA_VERSION.replace('_', '.'))
 
                 return validated_version >= min_version
 
         return False
 
-    def find_antlr(self, path):
-        antlr_jar_regex = compile('^antlr-(\d+)(.\d+){2}-complete.jar$')
-        # Search for all _files_ matching regex in path
-        antlr_jar_matches = [element for element in listdir(path) if isfile(join(path, element)) and
+    def find_antlr(self):
+        antlr_jar_path = join(__path__[0], self._EXT_LIB_DIR)
+        antlr_jar_regex = compile('^antlr-\d+(.\d+){1,2}-complete.jar$')
+        # Search for all _files_ matching regex in antlr_jar_path
+        antlr_jar_matches = [element for element in listdir(antlr_jar_path) if isfile(join(antlr_jar_path, element)) and
                              antlr_jar_regex.match(element) is not None]
-        # If more than one antlr jar was found return the first one
-        return antlr_jar_matches[0]
+        if antlr_jar_matches:
+            # If more than one antlr jar was found return path of the first one
+            antlr_jar = join(antlr_jar_path, antlr_jar_matches[0])
+            return antlr_jar
+        else:
+            return None
 
     def run(self):
         java_exe = self._find_java()
         assert java_exe is not None, "No compatible JRE was found on the system."
 
-        antlr_lib_path = join(__path__[0], 'lib')
-        antlr_jar = self.find_antlr(antlr_lib_path)
+        antlr_jar = self.find_antlr()
+        assert antlr_jar is not None, "No antlr jar was found in directory for external libraries."
 
         # TODO: determine python package name and create __init__ file
 
