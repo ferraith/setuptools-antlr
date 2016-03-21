@@ -1,6 +1,10 @@
-# Byte-compiled / optimized
+# byte-compiled / optimized
 __pycache__/
 *.py[cod]
+
+# build directories
+build/
+example/build/
 
 # virtual environment
 env/
