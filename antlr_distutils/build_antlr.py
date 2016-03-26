@@ -2,8 +2,8 @@
 
 from distutils.core import Command
 from distutils.version import LooseVersion
-from os import environ, listdir
-from os.path import isfile, join
+from os import environ, listdir, walk
+from os.path import isfile, join, relpath
 from re import compile
 from shutil import which
 from subprocess import run, PIPE, STDOUT
@@ -13,6 +13,7 @@ from antlr_distutils import __path__
 class build_antlr(Command):
     _MIN_JAVA_VERSION = '1.6.0'
     _EXT_LIB_DIR = 'lib'
+    _GRAMMAR_FILE_EXT = 'g4'
 
     description = 'generate a parser based on ANTLR'
 
@@ -38,10 +39,16 @@ class build_antlr(Command):
     def finalize_options(self):
         # Find out the build directories, ie. where to install from.
         self.set_undefined_options('build', ('build_lib', 'build_lib'))
-        # TODO: instead of asserting search for all root grammars
-        assert self.grammar is not None, 'No grammar passed to build_antlr command.'
+
+        if self.grammar:
+            self._grammars = [self.grammar]
+        else:
+            self._grammars = []
+            self._find_grammars('.')
+
         if self.listener is None:
             self.listener = True
+
         if self.visitor is None:
             self.visitor = True
 
@@ -77,7 +84,7 @@ class build_antlr(Command):
 
         return False
 
-    def find_antlr(self):
+    def _find_antlr(self):
         antlr_jar_path = join(__path__[0], self._EXT_LIB_DIR)
         antlr_jar_regex = compile('^antlr-\d+(.\d+){1,2}-complete.jar$')
         # Search for all _files_ matching regex in antlr_jar_path
@@ -90,11 +97,17 @@ class build_antlr(Command):
         else:
             return None
 
+    def _find_grammars(self, base_path):
+        for root, dirs, files in walk(base_path, followlinks=True):
+            grammar_files = [f for f in files if f.endswith("." + self._GRAMMAR_FILE_EXT)]
+            for fb in grammar_files:
+                self._grammars.append(relpath(join(root, fb), base_path))
+
     def run(self):
         java_exe = self._find_java()
         assert java_exe is not None, "No compatible JRE was found on the system."
 
-        antlr_jar = self.find_antlr()
+        antlr_jar = self._find_antlr()
         assert antlr_jar is not None, "No antlr jar was found in directory for external libraries."
 
         # TODO: determine python package name and create __init__ file
@@ -102,4 +115,5 @@ class build_antlr(Command):
         # TODO: create java call list based on user options
 
         # TODO: should stdout and stderror handled in a different way?
-        run([java_exe, '-jar', antlr_jar, '-o', self.build_lib, '-listener', '-visitor', '-Dlanguage=Python3', self.grammar])
+        run([java_exe, '-jar', antlr_jar, '-o', self.build_lib, '-listener', '-visitor', '-Dlanguage=Python3',
+             self.grammar])
