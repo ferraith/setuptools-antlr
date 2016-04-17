@@ -213,6 +213,7 @@ class build_antlr(Command):
             for fb in grammar_files:
                 grammars.append(AntlrGrammar(relpath(join(root, fb), base_path)))
 
+        # Generate a dependency tree for each grammar
         for grammar in grammars:
             try:
                 imports = grammar.read_imports()
@@ -221,6 +222,11 @@ class build_antlr(Command):
             except ImportGrammarError as e:
                 log.error('Imported grammar "' + e.name + '" in file ' + grammar.path + ' isn\'t present in package '
                           'source directory.')
+
+        # Remove all grammars which aren't the root of a dependency tree
+        for root_candidate in grammars:
+            if any(root_candidate in g.dependencies for g in grammars):
+                grammars.remove(root_candidate)
 
         return grammars
 
