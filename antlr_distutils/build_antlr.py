@@ -1,5 +1,6 @@
 """Implements the distutils command 'build_antlr'."""
 
+from distutils import log
 from distutils.core import Command
 from distutils.version import LooseVersion
 from os import environ, listdir, walk
@@ -13,24 +14,24 @@ from antlr_distutils import __path__
 
 
 class AntlrGrammar(object):
-    """ Basic information about an ANTLR grammar file.
+    """Basic information about an ANTLR grammar file.
 
     For generation of ANTLR based parsers basic information about the grammar like imports is necessary. This
     information and the functionality to retrieve this information out of a grammar file is placed in this class.
     """
 
-    def __init__(self, path):
+    def __init__(self, path: str):
         """Initializes a new AntlrGrammar object.
 
         :param path: path to grammar file
         """
-        # By convention grammar name is always equal to file name
+        # By convention grammar name is always equal to file name.
         self.name = splitext(basename(path))[0]
         self.path = path
-        self.imports = self._read_imports()
+        self.dependencies = []
 
-    def _read_imports(self):
-        """ Reads all imported grammars out of grammar file.
+    def read_imports(self) -> List[str]:
+        """Reads all imported grammars out of grammar file.
 
         :return: a list of imported grammars
         """
@@ -44,14 +45,32 @@ class AntlrGrammar(object):
                     return [s.strip() for s in imported_grammars.split(',')]
                 else:
                     return None
-        except IOError:
-            print("Can't read grammar", self.path)
+        except IOError as e:
+            log.error("Can't read grammar", e.filename)
             return None
+
+
+class ImportGrammarError(Exception):
+    """Raised when an imported grammar can't be found in package source directory."""
+
+    def __init__(self, name):
+        """Initializes a new ImportGrammarError object.
+
+        :param name: name of grammar
+        """
+        self.name = name
+
+    def __str__(self):
+        """Returns a nicely printable string representation of this ImportGrammarError object.
+
+        :return: a string representation of this error
+        """
+        return repr(self.name)
 
 
 # noinspection PyPep8Naming,PyAttributeOutsideInit
 class build_antlr(Command):
-    """ A distutils command for generating ANTLR based parsers.
+    """A distutils command for generating ANTLR based parsers.
 
     An extra command for distutils to generate ANTLR based parsers, lexers, listeners and visitors. The build_antlr
     command wraps the Java based generator provided by ANTLR developers. It searches for all grammar files and generates
@@ -133,6 +152,7 @@ class build_antlr(Command):
     def _validate_java(self, executable: str) -> bool:
         """Validates a Java Runtime Environment (JRE) if it fulfills minimal version required by ANTLR
 
+        :param executable: Java executable of JRE
         :return: flag whether JRE is at minimum required version
         """
         result = run([executable, '-version'], stdout=PIPE, stderr=STDOUT, universal_newlines=True)
@@ -171,15 +191,36 @@ class build_antlr(Command):
         """Searches for all ANTLR grammars in package source directory and returns a list of it. Only grammars which
         aren't included by other grammars are part of this list.
 
+        :param base_path: base path to search for ANTLR grammars
         :return: a list of all found ANTLR grammars
         """
         grammars = []
+
+        def get_grammar(name: str) -> AntlrGrammar:
+            """Searches in grammars list for a grammar which has passed name.
+
+            :param name: name of grammar
+            :return: an ANTLR grammar
+            """
+            try:
+                return next(g for g in grammars if g.name == name)
+            except StopIteration:
+                raise ImportGrammarError(name)
+
+        # Search for all grammars in package source directory
         for root, _, files in walk(base_path, followlinks=True):
             grammar_files = [f for f in files if f.endswith("." + self._GRAMMAR_FILE_EXT)]
             for fb in grammar_files:
                 grammars.append(AntlrGrammar(relpath(join(root, fb), base_path)))
 
-        # TODO: Filter all grammars which are included by other grammars
+        for grammar in grammars:
+            try:
+                imports = grammar.read_imports()
+                if imports:
+                    grammar.dependencies = [get_grammar(i) for i in imports]
+            except ImportGrammarError as e:
+                log.error('Imported grammar "' + e.name + '" in file ' + grammar.path + ' isn\'t present in package '
+                          'source directory.')
 
         return grammars
 
@@ -188,10 +229,12 @@ class build_antlr(Command):
         controlled by the user options passed on the command line or set internally to default values.
         """
         java_exe = self._find_java()
-        assert java_exe is not None, "No compatible JRE was found on the system."
+        if not java_exe:
+            log.fatal("No compatible JRE was found on the system.")
 
         antlr_jar = self._find_antlr()
-        assert antlr_jar is not None, "No antlr jar was found in directory for external libraries."
+        if not antlr_jar:
+            log.fatal("No antlr jar was found in directory for external libraries.")
 
         self._grammars = self._find_grammars(".")
 
