@@ -3,8 +3,9 @@
 from distutils import log
 from distutils.core import Command
 from distutils.version import LooseVersion
-from os import environ, listdir, walk
-from os.path import basename, isfile, join, relpath, splitext
+from os import environ, walk
+from os.path import join
+from pathlib import Path
 from re import compile
 from shutil import which
 from subprocess import run, PIPE, STDOUT
@@ -20,13 +21,13 @@ class AntlrGrammar(object):
     information and the functionality to retrieve this information out of a grammar file is placed in this class.
     """
 
-    def __init__(self, path: str):
+    def __init__(self, path: Path):
         """Initializes a new AntlrGrammar object.
 
         :param path: path to grammar file
         """
         # By convention grammar name is always equal to file name.
-        self.name = splitext(basename(path))[0]
+        self.name = path.stem
         self.path = path
         self.dependencies = []
 
@@ -38,7 +39,7 @@ class AntlrGrammar(object):
         import_stmt_regex = compile('import(.*);')
 
         try:
-            with open(self.path) as f:
+            with self.path.open() as f:
                 match = import_stmt_regex.search(f.read())
                 if match:
                     imported_grammars = match.group(1)
@@ -128,7 +129,7 @@ class build_antlr(Command):
         if self.visitor is None:
             self.visitor = True
 
-    def _find_java(self) -> str:
+    def _find_java(self) -> Path:
         """Searches for a working Java Runtime Environment (JRE) set in JAVA_HOME or PATH environment variables. A JRE
         located in JAVA_HOME will be preferred.
 
@@ -139,12 +140,12 @@ class build_antlr(Command):
             java_bin_dir = join(environ['JAVA_HOME'], 'bin')
             java_exe = which('java', path=java_bin_dir)
             if java_exe and self._validate_java(java_exe):
-                return java_exe
+                return Path(java_exe)
 
         # If Java wasn't found in JAVA_HOME fallback to PATH
         java_exe = which('java', path=None)
         if java_exe and self._validate_java(java_exe):
-            return java_exe
+            return Path(java_exe)
 
         # Java wasn't found on the system
         return None
@@ -170,24 +171,24 @@ class build_antlr(Command):
 
         return False
 
-    def _find_antlr(self) -> str:
+    def _find_antlr(self) -> Path:
         """Searches for ANTLR library at antlr-distutils install location.
 
         :return: a path to ANTLR library or None if library wasn't found
         """
-        antlr_jar_path = join(__path__[0], self._EXT_LIB_DIR)
+        antlr_jar_path = Path(__path__[0], self._EXT_LIB_DIR)
         antlr_jar_regex = compile('^antlr-\d+(.\d+){1,2}-complete.jar$')
         # Search for all _files_ matching regex in antlr_jar_path
-        antlr_jar_matches = [element for element in listdir(antlr_jar_path) if isfile(join(antlr_jar_path, element)) and
-                             antlr_jar_regex.match(element) is not None]
+        antlr_jar_matches = [element for element in antlr_jar_path.iterdir() if
+                             antlr_jar_path.joinpath(element).is_file() and
+                             antlr_jar_regex.match(element.name) is not None]
         if antlr_jar_matches:
             # If more than one antlr jar was found return path of the first one
-            antlr_jar = join(antlr_jar_path, antlr_jar_matches[0])
-            return antlr_jar
+            return Path(antlr_jar_path, antlr_jar_matches[0])
         else:
             return None
 
-    def _find_grammars(self, base_path: str) -> List[AntlrGrammar]:
+    def _find_grammars(self, base_path: Path) -> List[AntlrGrammar]:
         """Searches for all ANTLR grammars in package source directory and returns a list of it. Only grammars which
         aren't included by other grammars are part of this list.
 
@@ -208,10 +209,10 @@ class build_antlr(Command):
                 raise ImportGrammarError(name)
 
         # Search for all grammars in package source directory
-        for root, _, files in walk(base_path, followlinks=True):
+        for root, _, files in walk(str(base_path), followlinks=True):
             grammar_files = [f for f in files if f.endswith("." + self._GRAMMAR_FILE_EXT)]
             for fb in grammar_files:
-                grammars.append(AntlrGrammar(relpath(join(root, fb), base_path)))
+                grammars.append(AntlrGrammar(Path(root, fb)))
 
         # Generate a dependency tree for each grammar
         for grammar in grammars:
@@ -242,13 +243,13 @@ class build_antlr(Command):
         if not antlr_jar:
             log.fatal("No antlr jar was found in directory for external libraries.")
 
-        self._grammars = self._find_grammars(".")
+        self._grammars = self._find_grammars(Path.cwd())
 
-        # TODO: determine python package name and create __init__ file
-
-        # TODO: create java call list based on user options
-
-        # TODO: should stdout and stderror handled in a different way?
         for grammar in self._grammars:
-            run([java_exe, '-jar', antlr_jar, '-o', self.build_lib, '-listener', '-visitor', '-Dlanguage=Python3',
-                 '-lib', 'hello/dsl/common', grammar.path])
+            # TODO: determine python package name and create __init__ file
+
+            # TODO: create java call list based on user options
+
+            # TODO: should stdout and stderror handled in a different way?
+            run([str(java_exe), '-jar', str(antlr_jar), '-o', self.build_lib, '-listener', '-visitor',
+                 '-Dlanguage=Python3', '-lib', 'hello/dsl/common', str(grammar.path)])
