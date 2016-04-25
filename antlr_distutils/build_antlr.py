@@ -188,7 +188,7 @@ class build_antlr(Command):
         else:
             return None
 
-    def _find_grammars(self, base_path: Path) -> List[AntlrGrammar]:
+    def _find_grammars(self, base_path: Path = Path('.')) -> List[AntlrGrammar]:
         """Searches for all ANTLR grammars in package source directory and returns a list of it. Only grammars which
         aren't included by other grammars are part of this list.
 
@@ -243,13 +243,25 @@ class build_antlr(Command):
         if not antlr_jar:
             log.fatal("No antlr jar was found in directory for external libraries.")
 
-        self._grammars = self._find_grammars(Path.cwd())
+        self._grammars = self._find_grammars()
 
         for grammar in self._grammars:
-            # TODO: determine python package name and create __init__ file
+            # TODO: Generate a pythonic package name
+            package_name = grammar.name
+
+            # Setup file and folder locations for generation
+            grammar_file = grammar.path.name
+            working_dir = grammar.path.parent
+            output_dir = Path(self.build_lib, grammar.path.parent, package_name).absolute()
+
+            # Create python package
+            output_dir.mkdir(parents=True, exist_ok=True)
+            init_file = Path(output_dir, '__init__.py')
+            with init_file.open('w'):
+                pass
 
             # TODO: create java call list based on user options
 
             # TODO: should stdout and stderror handled in a different way?
-            run([str(java_exe), '-jar', str(antlr_jar), '-o', self.build_lib, '-listener', '-visitor',
-                 '-Dlanguage=Python3', '-lib', 'hello/dsl/common', str(grammar.path)])
+            run([str(java_exe), '-jar', str(antlr_jar), '-o', str(output_dir), '-listener', '-visitor',
+                 '-Dlanguage=Python3', '-lib', '../../hello/dsl/common', str(grammar_file)], cwd=str(working_dir))
