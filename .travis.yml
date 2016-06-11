@@ -1,0 +1,13 @@
+language: python
+python:
+  - "3.3"
+  - "3.4"
+  - "3.5"
+install:
+  - pip install --upgrade pip
+  - pip install virtualenv
+  - virtualenv ~/venv
+  - source ~/venv/bin/activate
+  - pip install pytest-cov coveralls
+  - pip install .
+  - pip list
