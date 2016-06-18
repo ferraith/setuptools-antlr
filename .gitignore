@@ -2,9 +2,12 @@
 __pycache__/
 *.py[cod]
 
-# build directories
+# build and distribution directories
 build/
+dist/
 example/build/
+example/dist/
+*.egg-info
 
 # virtual environment
 env/
