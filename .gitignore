@@ -10,6 +10,10 @@ example/dist/
 *.eggs/
 *.egg-info/
 
+# test coverage data
+.coverage
+coverage_report/
+
 # virtual environment
 env/
 example/env/

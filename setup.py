@@ -18,7 +18,7 @@ if __name__ == '__main__':
             packages=find_packages(),
             package_data={'antlr_distutils': ['lib/antlr-4.5.3-complete.jar', 'lib/LICENSE.txt']},
             tests_require=[
-                'pytest'
+                'pytest-cov'
             ],
             setup_requires=pytest_runner_opt,
             url='https://github.com/ferraith/antlr-distutils',
@@ -32,6 +32,6 @@ if __name__ == '__main__':
                 'Intended Audience :: Developers',
                 'Topic :: Software Development',
                 'License :: Other/Proprietary License',
-                'Programming Language :: Python :: 3.5',
+                'Programming Language :: Python :: 3.5'
             ],
     )
