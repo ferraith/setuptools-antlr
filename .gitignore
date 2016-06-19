@@ -7,7 +7,8 @@ build/
 dist/
 example/build/
 example/dist/
-*.egg-info
+*.eggs/
+*.egg-info/
 
 # virtual environment
 env/
