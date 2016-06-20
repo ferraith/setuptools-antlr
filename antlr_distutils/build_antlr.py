@@ -8,7 +8,7 @@ from os.path import join
 from pathlib import Path
 from re import compile
 from shutil import which
-from subprocess import run, PIPE, STDOUT
+from subprocess import PIPE, STDOUT, run
 from typing import List
 
 from antlr_distutils import __path__
@@ -188,7 +188,7 @@ class build_antlr(Command):
         else:
             return None
 
-    def _find_grammars(self, base_path: Path = Path('.')) -> List[AntlrGrammar]:
+    def _find_grammars(self, base_path: Path=Path('.')) -> List[AntlrGrammar]:
         """Searches for all ANTLR grammars in package source directory and returns a list of it. Only grammars which
         aren't included by other grammars are part of this list.
 
