@@ -12,6 +12,13 @@ if __name__ == '__main__':
     needs_pytest = {'pytest', 'test', 'ptr'}.intersection(argv)
     pytest_runner_opt = ['pytest-runner>=2.0,<3dev'] if needs_pytest else []
 
+    needs_pylint = {'lint'}.intersection(argv)
+    setuptools_lint_opt = ['setuptools-lint>=0.4,<0.5dev'] if needs_pylint else []
+
+    needs_flake8 = {'flake8'}.intersection(argv)
+    flake8_opt = ['flake8>=2.0,<3dev', 'pep8-naming>=0.3,<0.4dev', 'flake8-todo>=0.4,<0.5dev',
+                  'flake8-import-order>=0.8,<0.9dev'] if needs_flake8 else []
+
     setup(
             name='antlr-distutils',
             version='0.0.1',
@@ -20,7 +27,7 @@ if __name__ == '__main__':
             tests_require=[
                 'pytest-cov'
             ],
-            setup_requires=pytest_runner_opt,
+            setup_requires=pytest_runner_opt + setuptools_lint_opt + flake8_opt,
             url='https://github.com/ferraith/antlr-distutils',
             license='',
             author='Andreas Schmidl',
