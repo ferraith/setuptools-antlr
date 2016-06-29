@@ -12,8 +12,8 @@ def ch_resources_dir():
     os.chdir(os.path.join(localdir, 'resources'))
 
 
-def test_dummy():
-    grammar = AntlrGrammar(Path('Hello.g4'))
-    assert grammar is not None
-
-
+def test_antlr_grammar_read_imports():
+    grammar = AntlrGrammar(Path('SomeGrammar.g4'))
+    imports = set(grammar.read_imports())
+    assert len(imports) == 2
+    assert set(['CommonTerminals', 'SharedRules']) == imports
