@@ -47,7 +47,7 @@ class AntlrGrammar(object):
                 else:
                     return None
         except IOError as e:
-            log.error("Can't read grammar", e.filename)
+            log.error("Can't read grammar '%s'", e.filename)
             return None
 
 
