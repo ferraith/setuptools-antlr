@@ -26,7 +26,7 @@ if __name__ == '__main__':
             packages=find_packages(),
             package_data={'antlr_distutils': ['lib/antlr-4.5.3-complete.jar', 'lib/LICENSE.txt']},
             tests_require=[
-                'pytest-cov'
+                'pytest-cov', 'pytest-mock'
             ],
             setup_requires=pytest_runner_opt + setuptools_lint_opt + flake8_opt,
             url='https://github.com/ferraith/antlr-distutils',
