@@ -159,7 +159,7 @@ class build_antlr(Command):
         result = run([executable, '-version'], stdout=PIPE, stderr=STDOUT, universal_newlines=True)
 
         if result.returncode == 0:
-            version_regex = compile('\d+(.\d+){2}(_\d+)?')
+            version_regex = compile('\d+(.\d+){2}(_\d+)')
             version_match = version_regex.search(result.stdout)
 
             if version_match:
