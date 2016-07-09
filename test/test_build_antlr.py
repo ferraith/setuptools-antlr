@@ -8,12 +8,19 @@ import pytest
 from antlr_distutils.build_antlr import AntlrGrammar, build_antlr
 
 
-@pytest.fixture(scope="module", autouse=True)
-def ch_resources_dir():
-    localdir = path.dirname(__file__)
-    chdir(path.join(localdir, 'resources'))
+@pytest.fixture(scope='class')
+def ch_resources_dir(request):
+    chdir('.')
+    init_dir = Path.cwd()
+    local_dir = path.dirname(__file__)
+    chdir(path.join(local_dir, 'resources'))
+
+    def fin():
+        chdir(str(init_dir))
+    request.addfinalizer(fin)
 
 
+@pytest.mark.usefixtures('ch_resources_dir')
 class TestAntlrGrammar:
     def test_read_with_imports(self):
         grammar = AntlrGrammar(Path('SomeGrammar.g4'))
