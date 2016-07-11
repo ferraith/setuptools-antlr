@@ -119,3 +119,28 @@ Java HotSpot(TM) 64-Bit Server VM (build 1.5.0_22-b03, mixed mode)
         mocker.patch('antlr_distutils.build_antlr.run', return_value=result)
 
         assert command._validate_java('java.exe') == expected
+
+    test_ids_find_antlr = ['single', 'multiple', 'none', 'invalid']
+
+    test_data_find_antlr = [
+        ({'antlr-4.5.3-complete.jar'}, 'antlr-4.5.3-complete.jar'),
+        ({'antlr-0.1.1-complete.jar', 'antlr-3.0-complete.jar', 'antlr-4.5.2-complete.jar', 'antlr-4.5.3-complete.jar'},
+         'antlr-4.5.3-complete.jar'),
+        ({}, None),
+        ({'antlr-runtime-4.5.3.jar'}, None)
+    ]
+
+    @pytest.mark.parametrize('available_antlr_jars, expected_antlr_jar', test_data_find_antlr, ids=test_ids_find_antlr)
+    def test_find_antlr(self, mocker, tmpdir, available_antlr_jars, expected_antlr_jar):
+        dist = Distribution()
+        command = build_antlr(dist)
+
+        ext_lib_dir = tmpdir.mkdir('lib')
+        for jar in available_antlr_jars:
+            antlr_jar = ext_lib_dir.join(jar)
+            antlr_jar.write('dummy')
+
+        mocker.patch.object(build_antlr, '_EXT_LIB_DIR', str(ext_lib_dir))
+
+        found_antlr_jar = command._find_antlr()
+        assert found_antlr_jar == (Path(str(ext_lib_dir), expected_antlr_jar) if expected_antlr_jar else None)
