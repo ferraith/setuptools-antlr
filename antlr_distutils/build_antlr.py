@@ -2,7 +2,8 @@
 
 from distutils import log
 from distutils.core import Command
-from distutils.version import LooseVersion
+from distutils.version import LooseVersion, StrictVersion
+from operator import itemgetter
 from os import environ, walk
 from os.path import join
 from pathlib import Path
@@ -159,7 +160,7 @@ class build_antlr(Command):
         result = run([executable, '-version'], stdout=PIPE, stderr=STDOUT, universal_newlines=True)
 
         if result.returncode == 0:
-            version_regex = compile('\d+(.\d+){2}(_\d+)')
+            version_regex = compile('\d+(?:.\d+){2}(?:_\d+)')
             version_match = version_regex.search(result.stdout)
 
             if version_match:
@@ -174,17 +175,23 @@ class build_antlr(Command):
     def _find_antlr(self) -> Path:
         """Searches for ANTLR library at antlr-distutils install location.
 
-        :return: a path to ANTLR library or None if library wasn't found
+        :return: a path to latest ANTLR library or None if library wasn't found
         """
         antlr_jar_path = Path(__path__[0], self._EXT_LIB_DIR)
-        antlr_jar_regex = compile('^antlr-\d+(.\d+){1,2}-complete.jar$')
+        antlr_jar_regex = compile('^antlr-(\d+(?:.\d+){1,2})-complete.jar$')
+
         # Search for all _files_ matching regex in antlr_jar_path
-        antlr_jar_matches = [element for element in antlr_jar_path.iterdir() if
-                             antlr_jar_path.joinpath(element).is_file() and
-                             antlr_jar_regex.match(element.name) is not None]
-        if antlr_jar_matches:
-            # If more than one antlr jar was found return path of the first one
-            return Path(antlr_jar_path, antlr_jar_matches[0])
+        antlr_jars = []
+        for antlr_jar in antlr_jar_path.iterdir():
+            match = antlr_jar_regex.search(antlr_jar.name)
+            if antlr_jar_path.joinpath(antlr_jar).is_file() and match:
+                version = StrictVersion(match.group(1))
+                antlr_jars.append((antlr_jar, version))
+
+        if antlr_jars:
+            # If more than one antlr jar was found return path of the latest version
+            latest_antlr_jar = max(antlr_jars, key=itemgetter(1))[0]
+            return Path(antlr_jar_path, latest_antlr_jar)
         else:
             return None
 
