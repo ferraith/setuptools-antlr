@@ -8,7 +8,7 @@ import pytest
 from antlr_distutils.build_antlr import AntlrGrammar, build_antlr
 
 
-@pytest.fixture(scope='class')
+@pytest.fixture(scope='module')
 def ch_resources_dir(request):
     chdir('.')
     init_dir = Path.cwd()
@@ -144,3 +144,15 @@ Java HotSpot(TM) 64-Bit Server VM (build 1.5.0_22-b03, mixed mode)
 
         found_antlr_jar = command._find_antlr()
         assert found_antlr_jar == (Path(str(ext_lib_dir), expected_antlr_jar) if expected_antlr_jar else None)
+
+    def test_find_grammars(self):
+        dist = Distribution()
+        command = build_antlr(dist)
+
+        grammars = command._find_grammars()
+
+        g = grammars[0]
+        assert g.name == 'SomeGrammar'
+        assert g.dependencies[0].name == 'CommonTerminals'
+        assert g.dependencies[1].name == 'SharedRules'
+        assert g.dependencies[1].dependencies[0].name == 'CommonTerminals'
