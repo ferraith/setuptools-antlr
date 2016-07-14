@@ -10,7 +10,8 @@ example/dist/
 *.eggs/
 *.egg-info/
 
-# test coverage data
+# test and coverage data
+.cache/
 .coverage
 coverage_report/
 
