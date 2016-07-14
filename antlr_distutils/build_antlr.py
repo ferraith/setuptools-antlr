@@ -232,10 +232,7 @@ class build_antlr(Command):
                           'source directory.')
 
         # Remove all grammars which aren't the root of a dependency tree
-        for root_candidate in grammars:
-            if any(root_candidate in g.dependencies for g in grammars):
-                grammars.remove(root_candidate)
-
+        grammars[:] = filter(lambda r: all(r not in g.dependencies for g in grammars), grammars)
         return grammars
 
     def run(self):
