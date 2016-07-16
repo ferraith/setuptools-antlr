@@ -8,7 +8,7 @@ import pytest
 from antlr_distutils.build_antlr import AntlrGrammar, build_antlr
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope='module', autouse=True)
 def ch_resources_dir(request):
     chdir('.')
     init_dir = Path.cwd()
@@ -20,17 +20,16 @@ def ch_resources_dir(request):
     request.addfinalizer(fin)
 
 
-@pytest.mark.usefixtures('ch_resources_dir')
 class TestAntlrGrammar:
     def test_read_with_imports(self):
-        grammar = AntlrGrammar(Path('SomeGrammar.g4'))
+        grammar = AntlrGrammar(Path('distributed', 'SomeGrammar.g4'))
         imports = set(grammar.read_imports())
 
         assert len(imports) == 2
         assert {'CommonTerminals', 'SharedRules'} == imports
 
     def test_read_without_imports(self):
-        grammar = AntlrGrammar(Path('CommonTerminals.g4'))
+        grammar = AntlrGrammar(Path('distributed', 'CommonTerminals.g4'))
         imports = grammar.read_imports()
 
         assert not imports
@@ -145,14 +144,46 @@ Java HotSpot(TM) 64-Bit Server VM (build 1.5.0_22-b03, mixed mode)
         found_antlr_jar = command._find_antlr()
         assert found_antlr_jar == (Path(str(ext_lib_dir), expected_antlr_jar) if expected_antlr_jar else None)
 
-    def test_find_grammars(self):
+    def test_find_grammars_empty(self, tmpdir):
         dist = Distribution()
         command = build_antlr(dist)
 
-        grammars = command._find_grammars()
+        dsl_dir = tmpdir.mkdir('dsl')
+        g = command._find_grammars(Path(str(dsl_dir)))
 
-        g = grammars[0]
-        assert g.name == 'SomeGrammar'
-        assert g.dependencies[0].name == 'CommonTerminals'
-        assert g.dependencies[1].name == 'SharedRules'
-        assert g.dependencies[1].dependencies[0].name == 'CommonTerminals'
+        assert len(g) == 0
+
+    def test_find_grammars_standalone(self):
+        dist = Distribution()
+        command = build_antlr(dist)
+
+        g = command._find_grammars(Path('standalone'))
+
+        assert len(g) == 1
+        assert g[0].name == 'SomeGrammar'
+
+    def test_find_grammars_distributed(self):
+        dist = Distribution()
+        command = build_antlr(dist)
+
+        g = command._find_grammars(Path('distributed'))
+
+        assert len(g) == 1
+        assert g[0].name == 'SomeGrammar'
+        d = g[0].dependencies
+        assert len(d) == 2
+        assert d[0].name == 'CommonTerminals'
+        assert d[1].name == 'SharedRules'
+        dd = g[0].dependencies[0].dependencies
+        assert len(dd) == 0
+        dd = g[0].dependencies[1].dependencies
+        assert len(dd) == 1
+        assert dd[0].name == 'CommonTerminals'
+
+    def test_find_grammars_incomplete(self):
+        dist = Distribution()
+        command = build_antlr(dist)
+
+        g = command._find_grammars(Path('incomplete'))
+
+        assert len(g) == 0

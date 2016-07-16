@@ -55,12 +55,14 @@ class AntlrGrammar(object):
 class ImportGrammarError(Exception):
     """Raised when an imported grammar can't be found in package source directory."""
 
-    def __init__(self, name):
+    def __init__(self, name: str, parent: AntlrGrammar = None):
         """Initializes a new ImportGrammarError object.
 
-        :param name: name of grammar
+        :param name: name of included grammar
+        :param parent: parent grammar which includes missing grammar
         """
         self.name = name
+        self.parent = parent
 
     def __str__(self):
         """Returns a nicely printable string representation of this ImportGrammarError object.
@@ -222,18 +224,24 @@ class build_antlr(Command):
                 grammars.append(AntlrGrammar(Path(root, fb)))
 
         # Generate a dependency tree for each grammar
-        for grammar in grammars:
-            try:
+        grammar_tree = []
+        try:
+            for grammar in grammars:
                 imports = grammar.read_imports()
                 if imports:
-                    grammar.dependencies = [get_grammar(i) for i in imports]
-            except ImportGrammarError as e:
-                log.error('Imported grammar "' + e.name + '" in file ' + grammar.path + ' isn\'t present in package '
-                          'source directory.')
+                    try:
+                        grammar.dependencies = [get_grammar(i) for i in imports]
+                    except ImportGrammarError as e:
+                        e.parent = grammar
+                        raise
+        except ImportGrammarError as e:
+            log.error('Imported grammar "' + str(e) + '" in file ' + str(e.parent.path) + ' isn\'t present in package '
+                      'source directory.')
+        else:
+            # Remove all grammars which aren't the root of a dependency tree
+            grammar_tree[:] = filter(lambda r: all(r not in g.dependencies for g in grammars), grammars)
 
-        # Remove all grammars which aren't the root of a dependency tree
-        grammars[:] = filter(lambda r: all(r not in g.dependencies for g in grammars), grammars)
-        return grammars
+        return grammar_tree
 
     def run(self):
         """Performs all tasks necessary to generate ANTLR based parsers for all found grammars. This process is
@@ -261,8 +269,7 @@ class build_antlr(Command):
             # Create python package
             output_dir.mkdir(parents=True, exist_ok=True)
             init_file = Path(output_dir, '__init__.py')
-            with init_file.open('w'):
-                pass
+            init_file.open('wt').close()
 
             # TODO: create java call list based on user options
 
