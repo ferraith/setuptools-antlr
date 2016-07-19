@@ -50,7 +50,8 @@ class TestBuildAntlr:
         command = build_antlr(dist)
 
         mocker.patch.dict('os.environ', {'JAVA_HOME': 'c:/path/to/java'})
-        mocker.patch('antlr_distutils.build_antlr.which', return_value='c:/path/to/java/bin/java.exe')
+        mocker.patch('antlr_distutils.build_antlr.which',
+                     return_value='c:/path/to/java/bin/java.exe')
         mocker.patch.object(build_antlr, '_validate_java', return_value=True)
 
         java_path = command._find_java()
@@ -83,7 +84,8 @@ class TestBuildAntlr:
 
         mocker.patch.dict('os.environ')
         del environ['JAVA_HOME']
-        mocker.patch('antlr_distutils.build_antlr.which', return_value='c:/path/to/java/bin/java.exe')
+        mocker.patch('antlr_distutils.build_antlr.which',
+                     return_value='c:/path/to/java/bin/java.exe')
         mocker.patch.object(build_antlr, '_validate_java', return_value=True)
 
         java_path = command._find_java()
@@ -110,7 +112,8 @@ Java HotSpot(TM) 64-Bit Server VM (build 1.5.0_22-b03, mixed mode)
         (CompletedProcess(['java.exe', '-version'], 1, stdout=''), False)
     ]
 
-    @pytest.mark.parametrize('result, expected', test_data_validate_java, ids=test_ids_validate_java)
+    @pytest.mark.parametrize('result, expected', test_data_validate_java,
+                             ids=test_ids_validate_java)
     def test_validate_java(self, mocker, result, expected):
         dist = Distribution()
         command = build_antlr(dist)
@@ -123,13 +126,15 @@ Java HotSpot(TM) 64-Bit Server VM (build 1.5.0_22-b03, mixed mode)
 
     test_data_find_antlr = [
         ({'antlr-4.5.3-complete.jar'}, 'antlr-4.5.3-complete.jar'),
-        ({'antlr-0.1.1-complete.jar', 'antlr-3.0-complete.jar', 'antlr-4.5.2-complete.jar', 'antlr-4.5.3-complete.jar'},
+        ({'antlr-0.1.1-complete.jar', 'antlr-3.0-complete.jar', 'antlr-4.5.2-complete.jar',
+          'antlr-4.5.3-complete.jar'},
          'antlr-4.5.3-complete.jar'),
         ({}, None),
         ({'antlr-runtime-4.5.3.jar'}, None)
     ]
 
-    @pytest.mark.parametrize('available_antlr_jars, expected_antlr_jar', test_data_find_antlr, ids=test_ids_find_antlr)
+    @pytest.mark.parametrize('available_antlr_jars, expected_antlr_jar', test_data_find_antlr,
+                             ids=test_ids_find_antlr)
     def test_find_antlr(self, mocker, tmpdir, available_antlr_jars, expected_antlr_jar):
         dist = Distribution()
         command = build_antlr(dist)
@@ -142,7 +147,8 @@ Java HotSpot(TM) 64-Bit Server VM (build 1.5.0_22-b03, mixed mode)
         mocker.patch.object(build_antlr, '_EXT_LIB_DIR', str(ext_lib_dir))
 
         found_antlr_jar = command._find_antlr()
-        assert found_antlr_jar == (Path(str(ext_lib_dir), expected_antlr_jar) if expected_antlr_jar else None)
+        assert found_antlr_jar == (Path(str(ext_lib_dir), expected_antlr_jar) if expected_antlr_jar
+                                   else None)
 
     def test_find_grammars_empty(self, tmpdir):
         dist = Distribution()

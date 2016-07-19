@@ -18,8 +18,9 @@ from antlr_distutils import __path__
 class AntlrGrammar(object):
     """Basic information about an ANTLR grammar file.
 
-    For generation of ANTLR based parsers basic information about the grammar like imports is necessary. This
-    information and the functionality to retrieve this information out of a grammar file is placed in this class.
+    For generation of ANTLR based parsers basic information about the grammar like imports is
+    necessary. This information and the functionality to retrieve this information out of a grammar
+    file is placed in this class.
     """
 
     def __init__(self, path: Path):
@@ -76,10 +77,11 @@ class ImportGrammarError(Exception):
 class build_antlr(Command):
     """A distutils command for generating ANTLR based parsers.
 
-    An extra command for distutils to generate ANTLR based parsers, lexers, listeners and visitors. The build_antlr
-    command wraps the Java based generator provided by ANTLR developers. It searches for all grammar files and generates
-    a python package containing a modules specified in the user options. Please keep in mind that only grammars are
-    generated which aren't included by other grammars. This prevents generation of shared content like common terminals.
+    An extra command for distutils to generate ANTLR based parsers, lexers, listeners and visitors.
+    The build_antlr command wraps the Java based generator provided by ANTLR developers. It searches
+    for all grammar files and generates a python package containing a modules specified in the user
+    options. Please keep in mind that only grammars are generated which aren't included by other
+    grammars. This prevents generation of shared content like common terminals.
 
     :cvar _MIN_JAVA_VERSION: Minimal version of java required by ANTLR
     :cvar _EXT_LIB_DIR: Relative path to external libs directory
@@ -112,16 +114,18 @@ class build_antlr(Command):
     negative_opt = {'no-listener': 'listener', 'no-visitor': 'visitor'}
 
     def initialize_options(self):
-        """Sets default values for all the options that this command supports. Note that these defaults may be
-        overridden by other commands, by the setup script, by config files, or by the command-line.
+        """Sets default values for all the options that this command supports. Note that these
+        defaults may be overridden by other commands, by the setup script, by config files, or by
+        the command-line.
         """
         self.build_lib = None
         self.listener = None
         self.visitor = None
 
     def finalize_options(self):
-        """Sets final values for all the options that this command supports. This is always called as late as possible,
-        ie. after any option assignments from the command-line or from other commands have been done.
+        """Sets final values for all the options that this command supports. This is always called
+        as late as possible, ie. after any option assignments from the command-line or from other
+        commands have been done.
         """
         # Find out the build directories, ie. where to install from.
         self.set_undefined_options('build', ('build_lib', 'build_lib'))
@@ -133,8 +137,8 @@ class build_antlr(Command):
             self.visitor = True
 
     def _find_java(self) -> Path:
-        """Searches for a working Java Runtime Environment (JRE) set in JAVA_HOME or PATH environment variables. A JRE
-        located in JAVA_HOME will be preferred.
+        """Searches for a working Java Runtime Environment (JRE) set in JAVA_HOME or PATH
+        environment variables. A JRE located in JAVA_HOME will be preferred.
 
         :return: a path to a working JRE or None if no JRE was found
         """
@@ -154,7 +158,8 @@ class build_antlr(Command):
         return None
 
     def _validate_java(self, executable: str) -> bool:
-        """Validates a Java Runtime Environment (JRE) if it fulfills minimal version required by ANTLR
+        """Validates a Java Runtime Environment (JRE) if it fulfills minimal version required by
+        ANTLR.
 
         :param executable: Java executable of JRE
         :return: flag whether JRE is at minimum required version
@@ -198,8 +203,8 @@ class build_antlr(Command):
             return None
 
     def _find_grammars(self, base_path: Path=Path('.')) -> List[AntlrGrammar]:
-        """Searches for all ANTLR grammars in package source directory and returns a list of it. Only grammars which
-        aren't included by other grammars are part of this list.
+        """Searches for all ANTLR grammars in package source directory and returns a list of it.
+        Only grammars which aren't included by other grammars are part of this list.
 
         :param base_path: base path to search for ANTLR grammars
         :return: a list of all found ANTLR grammars
@@ -235,17 +240,19 @@ class build_antlr(Command):
                         e.parent = grammar
                         raise
         except ImportGrammarError as e:
-            log.error('Imported grammar "' + str(e) + '" in file ' + str(e.parent.path) + ' isn\'t present in package '
-                      'source directory.')
+            log.error('Imported grammar "' + str(e) + '" in file ' + str(e.parent.path) +
+                      ' isn\'t present in package source directory.')
         else:
             # Remove all grammars which aren't the root of a dependency tree
-            grammar_tree[:] = filter(lambda r: all(r not in g.dependencies for g in grammars), grammars)
+            grammar_tree[:] = filter(lambda r: all(r not in g.dependencies for g in grammars),
+                                     grammars)
 
         return grammar_tree
 
     def run(self):
-        """Performs all tasks necessary to generate ANTLR based parsers for all found grammars. This process is
-        controlled by the user options passed on the command line or set internally to default values.
+        """Performs all tasks necessary to generate ANTLR based parsers for all found grammars. This
+        process is controlled by the user options passed on the command line or set internally to
+        default values.
         """
         java_exe = self._find_java()
         if not java_exe:
@@ -274,5 +281,6 @@ class build_antlr(Command):
             # TODO: create java call list based on user options
 
             # TODO: should stdout and stderror handled in a different way?
-            run([str(java_exe), '-jar', str(antlr_jar), '-o', str(output_dir), '-listener', '-visitor',
-                 '-Dlanguage=Python3', '-lib', '../../hello/dsl/common', str(grammar_file)], cwd=str(working_dir))
+            run([str(java_exe), '-jar', str(antlr_jar), '-o', str(output_dir), '-listener',
+                 '-visitor', '-Dlanguage=Python3', '-lib', '../../hello/dsl/common',
+                 str(grammar_file)], cwd=str(working_dir))
