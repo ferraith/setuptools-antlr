@@ -49,7 +49,7 @@ class AntlrGrammar(object):
                 else:
                     return None
         except IOError as e:
-            log.error("Can't read grammar '%s'", e.filename)
+            log.error('Can\'t read grammar "{}"'.format(e.filename))
             return None
 
 
@@ -70,7 +70,7 @@ class ImportGrammarError(Exception):
 
         :return: a string representation of this error
         """
-        return repr(self.name)
+        return self.name
 
 
 # noinspection PyPep8Naming,PyAttributeOutsideInit
@@ -101,11 +101,11 @@ class build_antlr(Command):
     description = 'generate a parser based on ANTLR'
 
     user_options = [
-        ('build-lib=', 'd', "directory to \"build\" (copy) to"),
-        ('listener', None, "generate parse tree listener [default]"),
-        ('no-listener', None, "don't generate parse tree listener"),
-        ('visitor', None, "generate parse tree visitor"),
-        ('no-visitor', None, "don't generate parse tree visitor [default]")
+        ('build-lib=', 'd', 'directory to "build" (copy) to'),
+        ('listener', None, 'generate parse tree listener [default]'),
+        ('no-listener', None, 'don\'t generate parse tree listener'),
+        ('visitor', None, 'generate parse tree visitor'),
+        ('no-visitor', None, 'don\'t generate parse tree visitor [default]')
     ]
 
     boolean_options = ['listener', 'no-listener', 'visitor', 'no-visitor']
@@ -240,8 +240,8 @@ class build_antlr(Command):
                         e.parent = grammar
                         raise
         except ImportGrammarError as e:
-            log.error('Imported grammar "' + str(e) + '" in file ' + str(e.parent.path) +
-                      ' isn\'t present in package source directory.')
+            log.error('Imported grammar "{}" in file "{}" isn\'t present in package source '
+                      'directory.'.format(str(e), str(e.parent.path)))
         else:
             # Remove all grammars which aren't the root of a dependency tree
             grammar_tree[:] = filter(lambda r: all(r not in g.dependencies for g in grammars),
@@ -256,11 +256,11 @@ class build_antlr(Command):
         """
         java_exe = self._find_java()
         if not java_exe:
-            log.fatal("No compatible JRE was found on the system.")
+            log.fatal('No compatible JRE was found on the system.')
 
         antlr_jar = self._find_antlr()
         if not antlr_jar:
-            log.fatal("No antlr jar was found in directory for external libraries.")
+            log.fatal('No ANTLR jar was found in directory for external libraries.')
 
         self._grammars = self._find_grammars()
 
