@@ -45,10 +45,12 @@ class TestAntlrGrammar:
 
 
 class TestBuildAntlr:
-    def test_find_java_valid_java_home(self, mocker):
+    @pytest.fixture(autouse=True)
+    def command(self):
         dist = Distribution()
-        command = build_antlr(dist)
+        return build_antlr(dist)
 
+    def test_find_java_valid_java_home(self, mocker, command):
         mocker.patch.dict('os.environ', {'JAVA_HOME': 'c:/path/to/java'})
         mocker.patch('antlr_distutils.build_antlr.which',
                      return_value='c:/path/to/java/bin/java.exe')
@@ -57,20 +59,14 @@ class TestBuildAntlr:
         java_path = command._find_java()
         assert java_path == Path('c:/path/to/java/bin/java.exe')
 
-    def test_find_java_invalid_java_home(self, mocker):
-        dist = Distribution()
-        command = build_antlr(dist)
-
+    def test_find_java_invalid_java_home(self, mocker, command):
         mocker.patch.dict('os.environ', {'JAVA_HOME': 'c:/path/to/java'})
         mocker.patch('antlr_distutils.build_antlr.which', return_value=None)
 
         java_path = command._find_java()
         assert java_path is None
 
-    def test_find_java_no_java_home(self, mocker):
-        dist = Distribution()
-        command = build_antlr(dist)
-
+    def test_find_java_no_java_home(self, mocker, command):
         mocker.patch.dict('os.environ')
         del environ['JAVA_HOME']
         mocker.patch('antlr_distutils.build_antlr.which', return_value=None)
@@ -78,10 +74,7 @@ class TestBuildAntlr:
         java_path = command._find_java()
         assert java_path is None
 
-    def test_find_java_on_path(self, mocker):
-        dist = Distribution()
-        command = build_antlr(dist)
-
+    def test_find_java_on_path(self, mocker, command):
         mocker.patch.dict('os.environ')
         del environ['JAVA_HOME']
         mocker.patch('antlr_distutils.build_antlr.which',
@@ -114,10 +107,7 @@ Java HotSpot(TM) 64-Bit Server VM (build 1.5.0_22-b03, mixed mode)
 
     @pytest.mark.parametrize('result, expected', test_data_validate_java,
                              ids=test_ids_validate_java)
-    def test_validate_java(self, mocker, result, expected):
-        dist = Distribution()
-        command = build_antlr(dist)
-
+    def test_validate_java(self, mocker, command, result, expected):
         mocker.patch('antlr_distutils.build_antlr.run', return_value=result)
 
         assert command._validate_java('java.exe') == expected
@@ -135,10 +125,7 @@ Java HotSpot(TM) 64-Bit Server VM (build 1.5.0_22-b03, mixed mode)
 
     @pytest.mark.parametrize('available_antlr_jars, expected_antlr_jar', test_data_find_antlr,
                              ids=test_ids_find_antlr)
-    def test_find_antlr(self, mocker, tmpdir, available_antlr_jars, expected_antlr_jar):
-        dist = Distribution()
-        command = build_antlr(dist)
-
+    def test_find_antlr(self, mocker, tmpdir, command, available_antlr_jars, expected_antlr_jar):
         ext_lib_dir = tmpdir.mkdir('lib')
         for jar in available_antlr_jars:
             antlr_jar = ext_lib_dir.join(jar)
@@ -150,28 +137,19 @@ Java HotSpot(TM) 64-Bit Server VM (build 1.5.0_22-b03, mixed mode)
         assert found_antlr_jar == (Path(str(ext_lib_dir), expected_antlr_jar) if expected_antlr_jar
                                    else None)
 
-    def test_find_grammars_empty(self, tmpdir):
-        dist = Distribution()
-        command = build_antlr(dist)
-
+    def test_find_grammars_empty(self, tmpdir, command):
         dsl_dir = tmpdir.mkdir('dsl')
         g = command._find_grammars(Path(str(dsl_dir)))
 
         assert len(g) == 0
 
-    def test_find_grammars_standalone(self):
-        dist = Distribution()
-        command = build_antlr(dist)
-
+    def test_find_grammars_standalone(self, command):
         g = command._find_grammars(Path('standalone'))
 
         assert len(g) == 1
         assert g[0].name == 'SomeGrammar'
 
-    def test_find_grammars_distributed(self):
-        dist = Distribution()
-        command = build_antlr(dist)
-
+    def test_find_grammars_distributed(self, command):
         g = command._find_grammars(Path('distributed'))
 
         assert len(g) == 1
@@ -186,10 +164,22 @@ Java HotSpot(TM) 64-Bit Server VM (build 1.5.0_22-b03, mixed mode)
         assert len(dd) == 1
         assert dd[0].name == 'CommonTerminals'
 
-    def test_find_grammars_incomplete(self):
-        dist = Distribution()
-        command = build_antlr(dist)
-
+    def test_find_grammars_incomplete(self, command):
         g = command._find_grammars(Path('incomplete'))
 
         assert len(g) == 0
+
+    def test_finalize_options_default(self, command):
+        command.finalize_options()
+
+        assert command.listener is True
+        assert command.visitor is True
+
+    def test_finalize_options_configured(self, command):
+        command.listener = False
+        command.visitor = False
+
+        command.finalize_options()
+
+        assert command.listener is False
+        assert command.visitor is False
