@@ -7,7 +7,7 @@ from operator import itemgetter
 from os import environ, walk
 from os.path import join
 from pathlib import Path
-from re import compile
+from re import compile, sub
 from shutil import which
 from subprocess import PIPE, STDOUT, run
 from typing import List
@@ -249,6 +249,17 @@ class build_antlr(Command):
 
         return grammar_tree
 
+    @classmethod
+    def _camel_to_snake_case(cls, s):
+        """Converts a camel cased to a snake cased string.
+
+        :param s: a camel cased string
+        :return: a snake cased string
+        """
+        snake_cased = sub('([a-z0-9])([A-Z])', r'\1_\2',
+                          sub('(.)([A-Z][a-z]+)', r'\1_\2', s)).lower()
+        return snake_cased.replace('__', '_')
+
     def run(self):
         """Performs all tasks necessary to generate ANTLR based parsers for all found grammars. This
         process is controlled by the user options passed on the command line or set internally to
@@ -265,8 +276,7 @@ class build_antlr(Command):
         self._grammars = self._find_grammars()
 
         for grammar in self._grammars:
-            # TODO: Generate a pythonic package name
-            package_name = grammar.name
+            package_name = build_antlr._camel_to_snake_case(grammar.name)
 
             # Setup file and folder locations for generation
             grammar_file = grammar.path.name
