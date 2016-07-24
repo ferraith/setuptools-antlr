@@ -16,9 +16,10 @@ if __name__ == '__main__':
     setuptools_lint_opt = ['setuptools-lint>=0.4,<0.5dev'] if needs_pylint else []
 
     needs_flake8 = {'flake8'}.intersection(argv)
-    # Temporary disabled flake8-import-order and flake8-todo plugin until they switched to pycodestyle
-    # 'flake8-import-order>=0.8,<0.9dev', 'flake8-todo>=0.4,<0.5dev''flake8>=2.0,<3dev',
-    flake8_opt = ['pep8-naming>=0.3,<0.4dev'] if needs_flake8 else []
+    # Temporary disabled flake8-import-order and plugin until it switched to pycodestyle
+    # 'flake8-import-order>=0.8,<0.9dev'
+    flake8_opt = ['flake8>=2.0,<3dev', 'flake8-todo>=0.5,<0.6dev', 'pep8-naming>=0.3,<0.4dev'] \
+        if needs_flake8 else []
 
     setup(
             name='antlr-distutils',
