@@ -7,7 +7,7 @@ from operator import itemgetter
 from os import environ, walk
 from os.path import join
 from pathlib import Path
-from re import compile, sub
+from re import compile
 from shutil import which
 from subprocess import PIPE, STDOUT, run
 from typing import List
@@ -51,6 +51,11 @@ class AntlrGrammar(object):
         except IOError as e:
             log.error('Can\'t read grammar "{}"'.format(e.filename))
             return None
+
+    def walk(self):
+        for d in self.dependencies:
+            yield d
+            yield from d.walk()
 
 
 class ImportGrammarError(Exception):
@@ -249,17 +254,6 @@ class build_antlr(Command):
 
         return grammar_tree
 
-    @classmethod
-    def _camel_to_snake_case(cls, s):
-        """Converts a camel cased to a snake cased string.
-
-        :param s: a camel cased string
-        :return: a snake cased string
-        """
-        snake_cased = sub('([a-z0-9])([A-Z])', r'\1_\2',
-                          sub('(.)([A-Z][a-z]+)', r'\1_\2', s)).lower()
-        return snake_cased.replace('__', '_')
-
     def run(self):
         """Performs all tasks necessary to generate ANTLR based parsers for all found grammars. This
         process is controlled by the user options passed on the command line or set internally to
@@ -276,21 +270,38 @@ class build_antlr(Command):
         self._grammars = self._find_grammars()
 
         for grammar in self._grammars:
-            package_name = build_antlr._camel_to_snake_case(grammar.name)
-
             # Setup file and folder locations for generation
-            grammar_file = grammar.path.name
-            working_dir = grammar.path.parent
-            output_dir = Path(self.build_lib, grammar.path.parent, package_name).absolute()
+            grammar_file = grammar.path
+            output_dir = Path(self.build_lib)
+            package_dir = Path(self.build_lib, grammar.path.parent)
 
-            # Create python package
-            output_dir.mkdir(parents=True, exist_ok=True)
-            init_file = Path(output_dir, '__init__.py')
-            init_file.open('wt').close()
+            # Determine location of dependencies e.g. imported grammars and token files
+            library_dir = None
+            dependency_dirs = set(g.path.parent for g in grammar.walk())
+            if len(dependency_dirs) == 1:
+                library_dir = dependency_dirs.pop()
+            elif len(dependency_dirs) > 1:
+                log.fatal('Imported grammars of \'{}\' are located in more than one directory. '
+                          'This isn\'t supported by ANTLR. Move all imported grammars into one '
+                          'directory.'.format(grammar.name))
 
-            # TODO: create java call list based on user options
+            # Build up grammar-level options
+            grammar_options = ['-Dlanguage=Python3']
+
+            run_args = [str(java_exe)]
+            run_args.extend(['-jar', str(antlr_jar)])
+            run_args.extend(['-o', str(output_dir)])
+            if library_dir:
+                run_args.extend(['-lib', str(library_dir)])
+
+            if grammar_options:
+                run_args.extend(grammar_options)
+
+            run_args.append(str(grammar_file))
 
             # TODO: should stdout and stderror handled in a different way?
-            run([str(java_exe), '-jar', str(antlr_jar), '-o', str(output_dir), '-listener',
-                 '-visitor', '-Dlanguage=Python3', '-lib', '../../hello/dsl/common',
-                 str(grammar_file)], cwd=str(working_dir))
+            run(run_args)
+
+            # Create python package
+            init_file = Path(package_dir, '__init__.py')
+            init_file.open('wt').close()
