@@ -115,7 +115,6 @@ class build_antlr(Command):
 
     boolean_options = ['listener', 'no-listener', 'visitor', 'no-visitor']
 
-    # TODO: check if negative options are working
     negative_opt = {'no-listener': 'listener', 'no-visitor': 'visitor'}
 
     def initialize_options(self):
@@ -299,7 +298,6 @@ class build_antlr(Command):
 
             run_args.append(str(grammar_file))
 
-            # TODO: should stdout and stderror handled in a different way?
             run(run_args)
 
             # Create python package
