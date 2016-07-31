@@ -1,7 +1,6 @@
 """Implements the setuptools command 'AntlrCommand'."""
 
 from distutils import log
-from setuptools import Command
 from distutils.version import LooseVersion, StrictVersion
 from operator import itemgetter
 from os import environ, walk
@@ -11,6 +10,8 @@ from re import compile
 from shutil import which
 from subprocess import PIPE, STDOUT, run
 from typing import List
+
+from setuptools import Command
 
 from setuptools_antlr import __path__
 
@@ -265,9 +266,9 @@ class AntlrCommand(Command):
         if not antlr_jar:
             log.fatal('No ANTLR jar was found in directory for external libraries.')
 
-        self._grammars = self._find_grammars()
+        grammars = self._find_grammars()
 
-        for grammar in self._grammars:
+        for grammar in grammars:
             # Setup file and folder locations for generation
             grammar_file = grammar.path
             output_dir = Path(self.build_lib)
