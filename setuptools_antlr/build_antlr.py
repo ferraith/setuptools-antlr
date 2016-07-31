@@ -1,7 +1,7 @@
-"""Implements the distutils command 'build_antlr'."""
+"""Implements the setuptools command 'build_antlr'."""
 
 from distutils import log
-from distutils.core import Command
+from setuptools import Command
 from distutils.version import LooseVersion, StrictVersion
 from operator import itemgetter
 from os import environ, walk
@@ -12,7 +12,7 @@ from shutil import which
 from subprocess import PIPE, STDOUT, run
 from typing import List
 
-from antlr_distutils import __path__
+from setuptools_antlr import __path__
 
 
 class AntlrGrammar(object):
@@ -78,11 +78,10 @@ class ImportGrammarError(Exception):
         return self.name
 
 
-# noinspection PyPep8Naming,PyAttributeOutsideInit
 class build_antlr(Command):
-    """A distutils command for generating ANTLR based parsers.
+    """A setuptools command for generating ANTLR based parsers.
 
-    An extra command for distutils to generate ANTLR based parsers, lexers, listeners and visitors.
+    An extra command for setuptools to generate ANTLR based parsers, lexers, listeners and visitors.
     The build_antlr command wraps the Java based generator provided by ANTLR developers. It searches
     for all grammar files and generates a python package containing a modules specified in the user
     options. Please keep in mind that only grammars are generated which aren't included by other
@@ -184,7 +183,7 @@ class build_antlr(Command):
         return False
 
     def _find_antlr(self) -> Path:
-        """Searches for ANTLR library at antlr-distutils install location.
+        """Searches for ANTLR library at setuptools-antlr install location.
 
         :return: a path to latest ANTLR library or None if library wasn't found
         """

@@ -7,6 +7,6 @@ install:
   - pip install .
   - pip list
 script:
-  - python setup.py test --addopts "--cov=antlr_distutils --cov-report html"
+  - python setup.py test --addopts "--cov=setuptools_antlr --cov-report html"
 after_success:
     codecov

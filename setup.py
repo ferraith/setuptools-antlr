@@ -1,4 +1,4 @@
-"""Setup script for antlr-distutils."""
+"""Setup script for setuptools-antlr."""
 
 # need to guard script here due to reentrance while testing multiprocessing:
 if __name__ == '__main__':
@@ -20,25 +20,30 @@ if __name__ == '__main__':
                   'flake8-todo>=0.5,<0.6dev', 'pep8-naming>=0.3,<0.4dev'] if needs_flake8 else []
 
     setup(
-            name='antlr-distutils',
-            version='0.0.1',
-            packages=find_packages(),
-            package_data={'antlr_distutils': ['lib/antlr-4.5.3-complete.jar', 'lib/LICENSE.txt']},
-            tests_require=[
-                'pytest-cov', 'pytest-mock'
-            ],
-            setup_requires=pytest_runner_opt + setuptools_lint_opt + flake8_opt,
-            url='https://github.com/ferraith/antlr-distutils',
-            license='',
-            author='Andreas Schmidl',
-            author_email='Andreas.Schmidl@gmail.com',
-            description='A distutils extension for generating ANTLR based parsers.',
-            keywords='antlr distutils dsl',
-            classifiers=[
-                'Development Status :: 2 - Alpha',
-                'Intended Audience :: Developers',
-                'Topic :: Software Development',
-                'License :: Other/Proprietary License',
-                'Programming Language :: Python :: 3.5'
-            ],
+        name='setuptools-antlr',
+        version='0.0.1',
+        packages=find_packages(),
+        package_data={'setuptools_antlr': ['lib/antlr-4.5.3-complete.jar', 'lib/LICENSE.txt']},
+        entry_points={
+            "distutils.commands": [
+                "antlr = setuptools_antlr.build_antlr:build_antlr",
+            ]
+        },
+        tests_require=[
+            'pytest-cov', 'pytest-mock'
+        ],
+        setup_requires=pytest_runner_opt + setuptools_lint_opt + flake8_opt,
+        url='https://github.com/ferraith/setuptools-antlr',
+        license='MIT',
+        author='Andreas Schmidl',
+        author_email='Andreas.Schmidl@gmail.com',
+        description='Setuptools command for generating ANTLR based parsers.',
+        keywords='antlr setuptools dsl',
+        classifiers=[
+            'Development Status :: 2 - Alpha',
+            'Intended Audience :: Developers',
+            'Topic :: Software Development',
+            'License :: Other/Proprietary License',
+            'Programming Language :: Python :: 3.5'
+        ]
     )

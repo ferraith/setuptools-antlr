@@ -1,12 +1,5 @@
 """Setup script for hello example."""
-from distutils.command.build import build as _build
-from antlr_distutils.build_antlr import build_antlr
 
-
-class build(_build):
-    sub_commands = _build.sub_commands + [
-        ('build_antlr', None)
-    ]
 
 if __name__ == '__main__':
     from setuptools import setup, find_packages
@@ -18,10 +11,11 @@ if __name__ == '__main__':
         author='Andreas Schmidl',
         author_email='Andreas.Schmidl@gmail.com',
         packages=find_packages(),
-        setup_requires='antlr_distutils',
+        setup_requires=[
+            'setuptools-antlr',
+            'wheel'
+        ],
         install_requires=[
             'antlr4-python3-runtime'
-        ],
-        license='MIT',
-        cmdclass={'build': build, 'build_antlr': build_antlr}
+        ]
     )
