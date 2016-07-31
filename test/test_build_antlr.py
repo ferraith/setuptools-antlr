@@ -5,7 +5,7 @@ from subprocess import CompletedProcess
 
 import pytest
 
-from setuptools_antlr.build_antlr import AntlrGrammar, build_antlr
+from setuptools_antlr.build_antlr import AntlrGrammar, AntlrCommand
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -44,17 +44,17 @@ class TestAntlrGrammar:
         assert not imports
 
 
-class TestBuildAntlr:
+class TestAntlrCommand:
     @pytest.fixture(autouse=True)
     def command(self):
         dist = Distribution()
-        return build_antlr(dist)
+        return AntlrCommand(dist)
 
     def test_find_java_valid_java_home(self, mocker, command):
         mocker.patch.dict('os.environ', {'JAVA_HOME': 'c:/path/to/java'})
         mocker.patch('setuptools_antlr.build_antlr.which',
                      return_value='c:/path/to/java/bin/java.exe')
-        mocker.patch.object(build_antlr, '_validate_java', return_value=True)
+        mocker.patch.object(AntlrCommand, '_validate_java', return_value=True)
 
         java_path = command._find_java()
         assert java_path == Path('c:/path/to/java/bin/java.exe')
@@ -79,7 +79,7 @@ class TestBuildAntlr:
         del environ['JAVA_HOME']
         mocker.patch('setuptools_antlr.build_antlr.which',
                      return_value='c:/path/to/java/bin/java.exe')
-        mocker.patch.object(build_antlr, '_validate_java', return_value=True)
+        mocker.patch.object(AntlrCommand, '_validate_java', return_value=True)
 
         java_path = command._find_java()
         assert java_path is not None
@@ -131,7 +131,7 @@ Java HotSpot(TM) 64-Bit Server VM (build 1.5.0_22-b03, mixed mode)
             antlr_jar = ext_lib_dir.join(jar)
             antlr_jar.write('dummy')
 
-        mocker.patch.object(build_antlr, '_EXT_LIB_DIR', str(ext_lib_dir))
+        mocker.patch.object(AntlrCommand, '_EXT_LIB_DIR', str(ext_lib_dir))
 
         found_antlr_jar = command._find_antlr()
         assert found_antlr_jar == (Path(str(ext_lib_dir), expected_antlr_jar) if expected_antlr_jar
