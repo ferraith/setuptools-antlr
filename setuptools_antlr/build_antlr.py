@@ -1,4 +1,4 @@
-"""Implements the setuptools command 'AntlrCommand'."""
+"""Implements the setuptools command 'build_antlr'."""
 
 from distutils import log
 from distutils.version import LooseVersion, StrictVersion
@@ -79,11 +79,11 @@ class ImportGrammarError(Exception):
         return self.name
 
 
-class AntlrCommand(Command):
+class build_antlr(Command):
     """A setuptools command for generating ANTLR based parsers.
 
     An extra command for setuptools to generate ANTLR based parsers, lexers, listeners and visitors.
-    The AntlrCommand command wraps the Java based generator provided by ANTLR developers. It
+    The build_antlr command wraps the Java based generator provided by ANTLR developers. It
     searches for all grammar files and generates a python package containing a modules specified in
     the user options. Please keep in mind that only grammars are generated which aren't included by
     other grammars. This prevents generation of shared content like common terminals.
@@ -91,7 +91,7 @@ class AntlrCommand(Command):
     :cvar _MIN_JAVA_VERSION: Minimal version of java required by ANTLR
     :cvar _EXT_LIB_DIR: Relative path to external libs directory
     :cvar _GRAMMAR_FILE_EXT: File extension of ANTLR grammars
-    :cvar description: Description of AntlrCommand command
+    :cvar description: Description of build_antlr command
     :cvar user_options: Options which can be passed by the user
     :cvar boolean_options: Subset of user options which are binary
     :cvar negative_opt: Dictionary of user options which exclude each other

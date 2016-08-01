@@ -6,7 +6,7 @@ from unittest import mock
 
 import pytest
 
-from setuptools_antlr.build_antlr import AntlrGrammar, AntlrCommand
+from setuptools_antlr.build_antlr import AntlrGrammar, build_antlr
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -45,14 +45,14 @@ class TestAntlrGrammar:
         assert not imports
 
 
-class TestAntlrCommand:
+class TestBuildAntlr:
     @pytest.fixture(autouse=True)
     def command(self):
         dist = Distribution()
-        return AntlrCommand(dist)
+        return build_antlr(dist)
 
     @mock.patch('setuptools_antlr.build_antlr.which')
-    @mock.patch.object(AntlrCommand, '_validate_java')
+    @mock.patch.object(build_antlr, '_validate_java')
     def test_find_java_valid_java_home(self, mock_validate_java, mock_which, command):
         with mock.patch.dict('os.environ', {'JAVA_HOME': 'c:/path/to/java'}):
             mock_which.return_value = 'c:/path/to/java/bin/java.exe'
@@ -82,7 +82,7 @@ class TestAntlrCommand:
         assert java_path is None
 
     @mock.patch('setuptools_antlr.build_antlr.which')
-    @mock.patch.object(AntlrCommand, '_validate_java')
+    @mock.patch.object(build_antlr, '_validate_java')
     def test_find_java_on_path(self, mock_validate_java, mock_which, command):
         with mock.patch.dict('os.environ'):
             del environ['JAVA_HOME']
@@ -142,7 +142,7 @@ Java HotSpot(TM) 64-Bit Server VM (build 1.5.0_22-b03, mixed mode)
             antlr_jar = ext_lib_dir.join(jar)
             antlr_jar.write('dummy')
 
-        with mock.patch.object(AntlrCommand, '_EXT_LIB_DIR', str(ext_lib_dir)):
+        with mock.patch.object(build_antlr, '_EXT_LIB_DIR', str(ext_lib_dir)):
             found_antlr_jar = command._find_antlr()
 
         assert found_antlr_jar == (Path(str(ext_lib_dir), expected_antlr_jar) if expected_antlr_jar
