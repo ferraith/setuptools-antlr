@@ -2,6 +2,7 @@ from setuptools.dist import Distribution
 from os import chdir, environ, path
 from pathlib import Path
 from subprocess import CompletedProcess
+from unittest import mock
 
 import pytest
 
@@ -50,38 +51,46 @@ class TestAntlrCommand:
         dist = Distribution()
         return AntlrCommand(dist)
 
-    def test_find_java_valid_java_home(self, mocker, command):
-        mocker.patch.dict('os.environ', {'JAVA_HOME': 'c:/path/to/java'})
-        mocker.patch('setuptools_antlr.build_antlr.which',
-                     return_value='c:/path/to/java/bin/java.exe')
-        mocker.patch.object(AntlrCommand, '_validate_java', return_value=True)
+    @mock.patch('setuptools_antlr.build_antlr.which')
+    @mock.patch.object(AntlrCommand, '_validate_java')
+    def test_find_java_valid_java_home(self, mock_validate_java, mock_which, command):
+        with mock.patch.dict('os.environ', {'JAVA_HOME': 'c:/path/to/java'}):
+            mock_which.return_value = 'c:/path/to/java/bin/java.exe'
+            mock_validate_java.return_value = True
 
-        java_path = command._find_java()
+            java_path = command._find_java()
+
         assert java_path == Path('c:/path/to/java/bin/java.exe')
 
-    def test_find_java_invalid_java_home(self, mocker, command):
-        mocker.patch.dict('os.environ', {'JAVA_HOME': 'c:/path/to/java'})
-        mocker.patch('setuptools_antlr.build_antlr.which', return_value=None)
+    @mock.patch('setuptools_antlr.build_antlr.which')
+    def test_find_java_invalid_java_home(self, mock_which, command):
+        with mock.patch.dict('os.environ', {'JAVA_HOME': 'c:/path/to/java'}):
+            mock_which.return_value = None
 
-        java_path = command._find_java()
+            java_path = command._find_java()
+
         assert java_path is None
 
-    def test_find_java_no_java_home(self, mocker, command):
-        mocker.patch.dict('os.environ')
-        del environ['JAVA_HOME']
-        mocker.patch('setuptools_antlr.build_antlr.which', return_value=None)
+    @mock.patch('setuptools_antlr.build_antlr.which')
+    def test_find_java_no_java_home(self, mock_which, command):
+        with mock.patch.dict('os.environ'):
+            del environ['JAVA_HOME']
+            mock_which.return_value = None
 
-        java_path = command._find_java()
+            java_path = command._find_java()
+
         assert java_path is None
 
-    def test_find_java_on_path(self, mocker, command):
-        mocker.patch.dict('os.environ')
-        del environ['JAVA_HOME']
-        mocker.patch('setuptools_antlr.build_antlr.which',
-                     return_value='c:/path/to/java/bin/java.exe')
-        mocker.patch.object(AntlrCommand, '_validate_java', return_value=True)
+    @mock.patch('setuptools_antlr.build_antlr.which')
+    @mock.patch.object(AntlrCommand, '_validate_java')
+    def test_find_java_on_path(self, mock_validate_java, mock_which, command):
+        with mock.patch.dict('os.environ'):
+            del environ['JAVA_HOME']
+            mock_which.return_value='c:/path/to/java/bin/java.exe'
+            mock_validate_java.return_value = True
 
-        java_path = command._find_java()
+            java_path = command._find_java()
+
         assert java_path is not None
 
     test_ids_validate_java = ['valid', 'invalid', 'deprecated', 'corrupt']
@@ -107,8 +116,9 @@ Java HotSpot(TM) 64-Bit Server VM (build 1.5.0_22-b03, mixed mode)
 
     @pytest.mark.parametrize('result, expected', test_data_validate_java,
                              ids=test_ids_validate_java)
-    def test_validate_java(self, mocker, command, result, expected):
-        mocker.patch('setuptools_antlr.build_antlr.run', return_value=result)
+    @mock.patch('setuptools_antlr.build_antlr.run')
+    def test_validate_java(self, mock_run, command, result, expected):
+        mock_run.return_value = result
 
         assert command._validate_java('java.exe') == expected
 
@@ -125,15 +135,16 @@ Java HotSpot(TM) 64-Bit Server VM (build 1.5.0_22-b03, mixed mode)
 
     @pytest.mark.parametrize('available_antlr_jars, expected_antlr_jar', test_data_find_antlr,
                              ids=test_ids_find_antlr)
-    def test_find_antlr(self, mocker, tmpdir, command, available_antlr_jars, expected_antlr_jar):
+    def test_find_antlr(self, tmpdir, command, available_antlr_jars, expected_antlr_jar):
         ext_lib_dir = tmpdir.mkdir('lib')
+
         for jar in available_antlr_jars:
             antlr_jar = ext_lib_dir.join(jar)
             antlr_jar.write('dummy')
 
-        mocker.patch.object(AntlrCommand, '_EXT_LIB_DIR', str(ext_lib_dir))
+        with mock.patch.object(AntlrCommand, '_EXT_LIB_DIR', str(ext_lib_dir)):
+            found_antlr_jar = command._find_antlr()
 
-        found_antlr_jar = command._find_antlr()
         assert found_antlr_jar == (Path(str(ext_lib_dir), expected_antlr_jar) if expected_antlr_jar
                                    else None)
 

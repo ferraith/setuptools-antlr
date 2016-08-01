@@ -26,11 +26,11 @@ if __name__ == '__main__':
         package_data={'setuptools_antlr': ['lib/antlr-4.5.3-complete.jar', 'lib/LICENSE.txt']},
         entry_points={
             'distutils.commands': [
-                'build_antlr = setuptools_antlr.build_antlr:AntlrCommand',
+                'build_antlr = setuptools_antlr.build_antlr:AntlrCommand'
             ]
         },
         tests_require=[
-            'pytest-cov', 'pytest-mock'
+            'pytest-cov'
         ],
         setup_requires=pytest_runner_opt + setuptools_lint_opt + flake8_opt,
         url='https://github.com/ferraith/setuptools-antlr',
