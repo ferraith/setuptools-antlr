@@ -11,11 +11,6 @@ if __name__ == '__main__':
         author='Andreas Schmidl',
         author_email='Andreas.Schmidl@gmail.com',
         packages=find_packages(),
-        setup_requires=[
-            'setuptools-antlr',
-            'wheel'
-        ],
-        install_requires=[
-            'antlr4-python3-runtime'
-        ]
+        setup_requires=['setuptools-antlr'],
+        install_requires=['antlr4-python3-runtime']
     )
