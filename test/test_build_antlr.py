@@ -1,42 +1,42 @@
-from setuptools.dist import Distribution
-from os import chdir, environ, path
-from pathlib import Path
-from subprocess import CompletedProcess
-from unittest import mock
+import os
+import pathlib
+import subprocess
+import unittest.mock
 
 import pytest
+import setuptools.dist
 
 from setuptools_antlr.build_antlr import AntlrGrammar, build_antlr
 
 
 @pytest.fixture(scope='module', autouse=True)
 def ch_resources_dir(request):
-    chdir('.')
-    init_dir = Path.cwd()
-    local_dir = path.dirname(__file__)
-    chdir(path.join(local_dir, 'resources'))
+    os.chdir('.')
+    init_dir = pathlib.Path.cwd()
+    local_dir = os.path.dirname(__file__)
+    os.chdir(os.path.join(local_dir, 'resources'))
 
     def fin():
-        chdir(str(init_dir))
+        os.chdir(str(init_dir))
     request.addfinalizer(fin)
 
 
 class TestAntlrGrammar:
     def test_read_with_imports(self):
-        grammar = AntlrGrammar(Path('distributed', 'SomeGrammar.g4'))
+        grammar = AntlrGrammar(pathlib.Path('distributed', 'SomeGrammar.g4'))
         imports = set(grammar.read_imports())
 
         assert len(imports) == 2
         assert {'CommonTerminals', 'SharedRules'} == imports
 
     def test_read_without_imports(self):
-        grammar = AntlrGrammar(Path('distributed', 'CommonTerminals.g4'))
+        grammar = AntlrGrammar(pathlib.Path('distributed', 'CommonTerminals.g4'))
         imports = grammar.read_imports()
 
         assert not imports
 
     def test_read_nonexistent_file(self, capsys):
-        grammar = AntlrGrammar(Path('FooBar.g4'))
+        grammar = AntlrGrammar(pathlib.Path('FooBar.g4'))
         imports = grammar.read_imports()
 
         # check if error was logged
@@ -48,45 +48,45 @@ class TestAntlrGrammar:
 class TestBuildAntlr:
     @pytest.fixture(autouse=True)
     def command(self):
-        dist = Distribution()
+        dist = setuptools.dist.Distribution()
         return build_antlr(dist)
 
-    @mock.patch('setuptools_antlr.build_antlr.which')
-    @mock.patch.object(build_antlr, '_validate_java')
+    @unittest.mock.patch('shutil.which')
+    @unittest.mock.patch.object(build_antlr, '_validate_java')
     def test_find_java_valid_java_home(self, mock_validate_java, mock_which, command):
-        with mock.patch.dict('os.environ', {'JAVA_HOME': 'c:/path/to/java'}):
+        with unittest.mock.patch.dict('os.environ', {'JAVA_HOME': 'c:/path/to/java'}):
             mock_which.return_value = 'c:/path/to/java/bin/java.exe'
             mock_validate_java.return_value = True
 
             java_path = command._find_java()
 
-        assert java_path == Path('c:/path/to/java/bin/java.exe')
+        assert java_path == pathlib.Path('c:/path/to/java/bin/java.exe')
 
-    @mock.patch('setuptools_antlr.build_antlr.which')
+    @unittest.mock.patch('shutil.which')
     def test_find_java_invalid_java_home(self, mock_which, command):
-        with mock.patch.dict('os.environ', {'JAVA_HOME': 'c:/path/to/java'}):
+        with unittest.mock.patch.dict('os.environ', {'JAVA_HOME': 'c:/path/to/java'}):
             mock_which.return_value = None
 
             java_path = command._find_java()
 
         assert java_path is None
 
-    @mock.patch('setuptools_antlr.build_antlr.which')
+    @unittest.mock.patch('shutil.which')
     def test_find_java_no_java_home(self, mock_which, command):
-        with mock.patch.dict('os.environ'):
-            del environ['JAVA_HOME']
+        with unittest.mock.patch.dict('os.environ'):
+            del os.environ['JAVA_HOME']
             mock_which.return_value = None
 
             java_path = command._find_java()
 
         assert java_path is None
 
-    @mock.patch('setuptools_antlr.build_antlr.which')
-    @mock.patch.object(build_antlr, '_validate_java')
+    @unittest.mock.patch('shutil.which')
+    @unittest.mock.patch.object(build_antlr, '_validate_java')
     def test_find_java_on_path(self, mock_validate_java, mock_which, command):
-        with mock.patch.dict('os.environ'):
-            del environ['JAVA_HOME']
-            mock_which.return_value='c:/path/to/java/bin/java.exe'
+        with unittest.mock.patch.dict('os.environ'):
+            del os.environ['JAVA_HOME']
+            mock_which.return_value = 'c:/path/to/java/bin/java.exe'
             mock_validate_java.return_value = True
 
             java_path = command._find_java()
@@ -96,27 +96,27 @@ class TestBuildAntlr:
     test_ids_validate_java = ['valid', 'invalid', 'deprecated', 'corrupt']
 
     test_data_validate_java = [
-        (CompletedProcess(['java.exe', '-version'], 0, stdout="""
+        (subprocess.CompletedProcess(['java.exe', '-version'], 0, stdout="""
 java version "1.8.0_92"
 Java(TM) SE Runtime Environment (build 1.8.0_92-b14)
 Java HotSpot(TM) 64-Bit Server VM (build 25.92-b14, mixed mode)
 """), True),
-        (CompletedProcess(['java.exe', '-version'], 0, stdout="""
+        (subprocess.CompletedProcess(['java.exe', '-version'], 0, stdout="""
 java version "1.4.0"
 Java(TM) 2 Runtime Environment, Standard Edition (build 1.4.0-b03)
 Java HotSpot(TM) 64-Bit Server VM (build 1.4.0-b03, mixed mode)
 """), False),
-        (CompletedProcess(['java.exe', '-version'], 0, stdout="""
+        (subprocess.CompletedProcess(['java.exe', '-version'], 0, stdout="""
 java version "1.5.0_22"
 Java(TM) 2 Runtime Environment, Standard Edition (build 1.5.0_22-b03)
 Java HotSpot(TM) 64-Bit Server VM (build 1.5.0_22-b03, mixed mode)
 """), False),
-        (CompletedProcess(['java.exe', '-version'], 1, stdout=''), False)
+        (subprocess.CompletedProcess(['java.exe', '-version'], 1, stdout=''), False)
     ]
 
     @pytest.mark.parametrize('result, expected', test_data_validate_java,
                              ids=test_ids_validate_java)
-    @mock.patch('setuptools_antlr.build_antlr.run')
+    @unittest.mock.patch('subprocess.run')
     def test_validate_java(self, mock_run, command, result, expected):
         mock_run.return_value = result
 
@@ -142,26 +142,26 @@ Java HotSpot(TM) 64-Bit Server VM (build 1.5.0_22-b03, mixed mode)
             antlr_jar = ext_lib_dir.join(jar)
             antlr_jar.write('dummy')
 
-        with mock.patch.object(build_antlr, '_EXT_LIB_DIR', str(ext_lib_dir)):
+        with unittest.mock.patch.object(build_antlr, '_EXT_LIB_DIR', str(ext_lib_dir)):
             found_antlr_jar = command._find_antlr()
 
-        assert found_antlr_jar == (Path(str(ext_lib_dir), expected_antlr_jar) if expected_antlr_jar
+        assert found_antlr_jar == (pathlib.Path(str(ext_lib_dir), expected_antlr_jar) if expected_antlr_jar
                                    else None)
 
     def test_find_grammars_empty(self, tmpdir, command):
         dsl_dir = tmpdir.mkdir('dsl')
-        g = command._find_grammars(Path(str(dsl_dir)))
+        g = command._find_grammars(pathlib.Path(str(dsl_dir)))
 
         assert len(g) == 0
 
     def test_find_grammars_standalone(self, command):
-        g = command._find_grammars(Path('standalone'))
+        g = command._find_grammars(pathlib.Path('standalone'))
 
         assert len(g) == 1
         assert g[0].name == 'SomeGrammar'
 
     def test_find_grammars_distributed(self, command):
-        g = command._find_grammars(Path('distributed'))
+        g = command._find_grammars(pathlib.Path('distributed'))
 
         assert len(g) == 1
         assert g[0].name == 'SomeGrammar'
@@ -176,7 +176,7 @@ Java HotSpot(TM) 64-Bit Server VM (build 1.5.0_22-b03, mixed mode)
         assert dd[0].name == 'CommonTerminals'
 
     def test_find_grammars_incomplete(self, command):
-        g = command._find_grammars(Path('incomplete'))
+        g = command._find_grammars(pathlib.Path('incomplete'))
 
         assert len(g) == 0
 
