@@ -27,3 +27,4 @@ deploy:
   skip_cleanup: true
   on:
     repo: ferraith/setuptools-antlr
+    tag: true
