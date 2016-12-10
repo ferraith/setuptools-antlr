@@ -28,7 +28,7 @@ class AntlrGrammar(object):
 
         :param path: path to grammar file
         """
-        # By convention grammar name is always equal to file name.
+        # by convention grammar name is always equal to file name
         self.name = path.stem
         self.path = path
         self.dependencies = []
@@ -47,10 +47,9 @@ class AntlrGrammar(object):
                     imported_grammars = match.group(1)
                     return [s.strip() for s in imported_grammars.split(',')]
                 else:
-                    return None
+                    return []
         except IOError as e:
-            distutils.log.error('Can\'t read grammar "{}"'.format(e.filename))
-            return None
+            raise distutils.errors.DistutilsFileError('Can\'t read grammar "{}"'.format(e.filename))
 
     def walk(self):
         for d in self.dependencies:
@@ -130,7 +129,7 @@ class build_antlr(setuptools.Command):
         as late as possible, ie. after any option assignments from the command-line or from other
         commands have been done.
         """
-        # Find out the build directories, ie. where to install from.
+        # find out the build directories, ie. where to install from
         self.set_undefined_options('build', ('build_lib', 'build_lib'))
 
         if self.listener is None:
@@ -145,19 +144,19 @@ class build_antlr(setuptools.Command):
 
         :return: a path to a working JRE or None if no JRE was found
         """
-        # First check if a working Java is set in JAVA_HOME
+        # first check if a working Java is set in JAVA_HOME
         if 'JAVA_HOME' in os.environ:
             java_bin_dir = os.path.join(os.environ['JAVA_HOME'], 'bin')
             java_exe = shutil.which('java', path=java_bin_dir)
             if java_exe and self._validate_java(java_exe):
                 return pathlib.Path(java_exe)
 
-        # If Java wasn't found in JAVA_HOME fallback to PATH
+        # if Java wasn't found in JAVA_HOME fallback to PATH
         java_exe = shutil.which('java', path=None)
         if java_exe and self._validate_java(java_exe):
             return pathlib.Path(java_exe)
 
-        # Java wasn't found on the system
+        # java wasn't found on the system
         return None
 
     def _validate_java(self, executable: str) -> bool:
@@ -175,7 +174,7 @@ class build_antlr(setuptools.Command):
             version_match = version_regex.search(result.stdout)
 
             if version_match:
-                # Create normalized versions containing only valid chars
+                # create normalized versions containing only valid chars
                 validated_version = distutils.version.LooseVersion(version_match.group(0).replace('_', '.'))
                 min_version = distutils.version.LooseVersion(self._MIN_JAVA_VERSION.replace('_', '.'))
 
@@ -191,7 +190,7 @@ class build_antlr(setuptools.Command):
         antlr_jar_path = pathlib.Path(__path__[0], self._EXT_LIB_DIR)
         antlr_jar_regex = re.compile('^antlr-(\d+(?:.\d+){1,2})-complete.jar$')
 
-        # Search for all _files_ matching regex in antlr_jar_path
+        # search for all _files_ matching regex in antlr_jar_path
         antlr_jars = []
         for antlr_jar in antlr_jar_path.iterdir():
             match = antlr_jar_regex.search(antlr_jar.name)
@@ -200,7 +199,7 @@ class build_antlr(setuptools.Command):
                 antlr_jars.append((antlr_jar, version))
 
         if antlr_jars:
-            # If more than one antlr jar was found return path of the latest version
+            # if more than one antlr jar was found return path of the latest version
             latest_antlr_jar = max(antlr_jars, key=operator.itemgetter(1))[0]
             return pathlib.Path(antlr_jar_path, latest_antlr_jar)
         else:
@@ -226,13 +225,13 @@ class build_antlr(setuptools.Command):
             except StopIteration:
                 raise ImportGrammarError(name)
 
-        # Search for all grammars in package source directory
+        # search for all grammars in package source directory
         for root, _, files in os.walk(str(base_path), followlinks=True):
             grammar_files = [f for f in files if f.endswith("." + self._GRAMMAR_FILE_EXT)]
             for fb in grammar_files:
                 grammars.append(AntlrGrammar(pathlib.Path(root, fb)))
 
-        # Generate a dependency tree for each grammar
+        # generate a dependency tree for each grammar
         grammar_tree = []
         try:
             for grammar in grammars:
@@ -244,10 +243,10 @@ class build_antlr(setuptools.Command):
                         e.parent = grammar
                         raise
         except ImportGrammarError as e:
-            distutils.log.info('Imported grammar "{}" in file "{}" isn\'t present in package source '
-                                'directory.'.format(str(e), str(e.parent.path)))
+            raise distutils.errors.DistutilsFileError('Imported grammar "{}" in file "{}" isn\'t present in package '
+                                                      'source directory.'.format(str(e), str(e.parent.path)))
         else:
-            # Remove all grammars which aren't the root of a dependency tree
+            # remove all grammars which aren't the root of a dependency tree
             grammar_tree[:] = filter(lambda r: all(r not in g.dependencies for g in grammars),
                                      grammars)
 
@@ -269,12 +268,12 @@ class build_antlr(setuptools.Command):
         grammars = self._find_grammars()
 
         for grammar in grammars:
-            # Setup file and folder locations for generation
+            # setup file and folder locations for generation
             grammar_file = grammar.path
             output_dir = pathlib.Path(self.build_lib)
             package_dir = pathlib.Path(self.build_lib, grammar.path.parent)
 
-            # Determine location of dependencies e.g. imported grammars and token files
+            # determine location of dependencies e.g. imported grammars and token files
             library_dir = None
             dependency_dirs = set(g.path.parent for g in grammar.walk())
             if len(dependency_dirs) == 1:
@@ -285,7 +284,7 @@ class build_antlr(setuptools.Command):
                                                             'imported grammars into one'
                                                             'directory.'.format(grammar.name))
 
-            # Build up grammar-level options
+            # build up grammar-level options
             grammar_options = ['-Dlanguage=Python3']
 
             run_args = [str(java_exe)]
@@ -307,6 +306,6 @@ class build_antlr(setuptools.Command):
                 raise distutils.errors.DistutilsExecError('{} parser couldn\'t be generated\n'
                                                           '{}'.format(grammar.name, e.stdout))
 
-            # Create python package
+            # create python package
             init_file = pathlib.Path(package_dir, '__init__.py')
             init_file.open('wt').close()

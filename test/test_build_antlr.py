@@ -1,3 +1,4 @@
+import distutils.errors
 import os
 import pathlib
 import subprocess
@@ -35,14 +36,13 @@ class TestAntlrGrammar:
 
         assert not imports
 
-    def test_read_nonexistent_file(self, capsys):
+    def test_read_nonexistent_file(self):
         grammar = AntlrGrammar(pathlib.Path('FooBar.g4'))
-        imports = grammar.read_imports()
 
-        # check if error was logged
-        _, err = capsys.readouterr()
-        assert 'FooBar.g4' in err
-        assert not imports
+        # check if DistutilsFileError was thrown
+        with pytest.raises(distutils.errors.DistutilsFileError) as excinfo:
+            grammar.read_imports()
+        assert excinfo.match('FooBar.g4')
 
 
 class TestBuildAntlr:
@@ -176,9 +176,10 @@ Java HotSpot(TM) 64-Bit Server VM (build 1.5.0_22-b03, mixed mode)
         assert dd[0].name == 'CommonTerminals'
 
     def test_find_grammars_incomplete(self, command):
-        g = command._find_grammars(pathlib.Path('incomplete'))
-
-        assert len(g) == 0
+        # check if DistutilsFileError was thrown
+        with pytest.raises(distutils.errors.DistutilsFileError) as excinfo:
+            command._find_grammars(pathlib.Path('incomplete'))
+        assert excinfo.match('CommonTerminals')
 
     def test_finalize_options_default(self, command):
         command.finalize_options()
