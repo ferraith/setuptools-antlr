@@ -1,4 +1,4 @@
-"""hello entry point."""
+"""foobar entry point."""
 
 
 def main():

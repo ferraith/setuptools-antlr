@@ -1,10 +1,10 @@
-"""Setup script for hello example."""
+"""Setup script for foobar example."""
 
 if __name__ == '__main__':
     from setuptools import setup, find_packages
 
     setup(
-        name='hello',
+        name='foobar',
         version='0.1',
         description='Example of use of ANTLR',
         author='Andreas Schmidl',
