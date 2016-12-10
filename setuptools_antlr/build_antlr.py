@@ -1,4 +1,5 @@
 """Implements the setuptools command 'build_antlr'."""
+import distutils.errors
 import distutils.log
 import distutils.version
 import operator
@@ -243,7 +244,7 @@ class build_antlr(setuptools.Command):
                         e.parent = grammar
                         raise
         except ImportGrammarError as e:
-            distutils.log.error('Imported grammar "{}" in file "{}" isn\'t present in package source '
+            distutils.log.info('Imported grammar "{}" in file "{}" isn\'t present in package source '
                                 'directory.'.format(str(e), str(e.parent.path)))
         else:
             # Remove all grammars which aren't the root of a dependency tree
@@ -259,11 +260,11 @@ class build_antlr(setuptools.Command):
         """
         java_exe = self._find_java()
         if not java_exe:
-            distutils.log.fatal('No compatible JRE was found on the system.')
+            raise distutils.errors.DistutilsExecError('no compatible JRE was found on the system')
 
         antlr_jar = self._find_antlr()
         if not antlr_jar:
-            distutils.log.fatal('No ANTLR jar was found in directory for external libraries.')
+            raise distutils.errors.DistutilsExecError('no ANTLR jar was found in lib directory')
 
         grammars = self._find_grammars()
 
@@ -279,9 +280,10 @@ class build_antlr(setuptools.Command):
             if len(dependency_dirs) == 1:
                 library_dir = dependency_dirs.pop()
             elif len(dependency_dirs) > 1:
-                distutils.log.fatal('Imported grammars of \'{}\' are located in more than one directory. '
-                                    'This isn\'t supported by ANTLR. Move all imported grammars into one '
-                                    'directory.'.format(grammar.name))
+                raise distutils.errors.DistutilsOptionError('Imported grammars of \'{}\' are located in more than one '
+                                                            'directory. This isn\'t supported by ANTLR. Move all '
+                                                            'imported grammars into one'
+                                                            'directory.'.format(grammar.name))
 
             # Build up grammar-level options
             grammar_options = ['-Dlanguage=Python3']
@@ -297,7 +299,13 @@ class build_antlr(setuptools.Command):
 
             run_args.append(str(grammar_file))
 
-            subprocess.run(run_args)
+            distutils.log.info('generating {} parser -> {}'.format(grammar.name, package_dir))
+            try:
+                subprocess.run(run_args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=True,
+                               universal_newlines=True)
+            except subprocess.CalledProcessError as e:
+                raise distutils.errors.DistutilsExecError('{} parser couldn\'t be generated\n'
+                                                          '{}'.format(grammar.name, e.stdout))
 
             # Create python package
             init_file = pathlib.Path(package_dir, '__init__.py')

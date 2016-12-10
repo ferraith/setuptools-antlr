@@ -5,7 +5,7 @@ import sys
 # need to guard script here due to reentrance while testing multiprocessing:
 if __name__ == '__main__':
     if sys.version_info < (3, 5):
-        print('This Python version is not supported, minimal version 3.5 is required.')
+        print('This Python version isn\'t supported, minimal version 3.5 is required.')
         exit(1)
 
     needs_pytest = {'pytest', 'test', 'ptr'}.intersection(sys.argv)
