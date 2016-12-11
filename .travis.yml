@@ -5,8 +5,7 @@ python:
   - '3.6-dev'
 
 install:
-- pip install --upgrade pip setuptools pytest
-- pip install codecov
+- pip install --upgrade pip setuptools wheel pytest codecov
 - pip install .
 - pip list
 
