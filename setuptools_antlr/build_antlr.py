@@ -82,7 +82,7 @@ class build_antlr(setuptools.Command):
 
     An extra command for setuptools to generate ANTLR based parsers, lexers, listeners and visitors.
     The build_antlr command wraps the Java based generator provided by ANTLR developers. It
-    searches for all grammar files and generates a python package containing a modules specified in
+    searches for all grammar files and generates a Python package containing a modules specified in
     the user options. Please keep in mind that only grammars are generated which aren't included by
     other grammars. This prevents generation of shared content like common terminals.
 
@@ -252,6 +252,15 @@ class build_antlr(setuptools.Command):
 
         return grammar_tree
 
+    @classmethod
+    def _camel_to_snake_case(cls, s):
+        """Converts a camel cased to a snake cased string.
+        :param s: a camel cased string
+        :return: a snake cased string
+        """
+        snake_cased = re.sub('([a-z0-9])([A-Z])', r'\1_\2', re.sub('(.)([A-Z][a-z]+)', r'\1_\2', s)).lower()
+        return snake_cased.replace('__', '_')
+
     def run(self):
         """Performs all tasks necessary to generate ANTLR based parsers for all found grammars. This
         process is controlled by the user options passed on the command line or set internally to
@@ -269,9 +278,9 @@ class build_antlr(setuptools.Command):
 
         for grammar in grammars:
             # setup file and folder locations for generation
-            grammar_file = grammar.path
-            output_dir = pathlib.Path(self.build_lib)
-            package_dir = pathlib.Path(self.build_lib, grammar.path.parent)
+            grammar_file = grammar.path.name
+            grammar_dir = grammar.path.parent
+            package_dir = pathlib.Path(self.build_lib, grammar_dir, self._camel_to_snake_case(grammar.name))
 
             # determine location of dependencies e.g. imported grammars and token files
             library_dir = None
@@ -286,26 +295,24 @@ class build_antlr(setuptools.Command):
 
             # build up grammar-level options
             grammar_options = ['-Dlanguage=Python3']
-
             run_args = [str(java_exe)]
             run_args.extend(['-jar', str(antlr_jar)])
-            run_args.extend(['-o', str(output_dir)])
+            run_args.extend(['-o', str(package_dir.absolute())])
             if library_dir:
-                run_args.extend(['-lib', str(library_dir)])
-
+                run_args.extend(['-lib', str(library_dir.absolute())])
             if grammar_options:
                 run_args.extend(grammar_options)
-
             run_args.append(str(grammar_file))
 
+            # call ANTLR parser generator
             distutils.log.info('generating {} parser -> {}'.format(grammar.name, package_dir))
             try:
                 subprocess.run(run_args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=True,
-                               universal_newlines=True)
+                               universal_newlines=True, cwd=str(grammar_dir))
             except subprocess.CalledProcessError as e:
                 raise distutils.errors.DistutilsExecError('{} parser couldn\'t be generated\n'
                                                           '{}'.format(grammar.name, e.stdout))
 
-            # create python package
+            # create Python package
             init_file = pathlib.Path(package_dir, '__init__.py')
             init_file.open('wt').close()
