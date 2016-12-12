@@ -132,12 +132,6 @@ class build_antlr(setuptools.Command):
         # find out the build directories, ie. where to install from
         self.set_undefined_options('build', ('build_lib', 'build_lib'))
 
-        if self.listener is None:
-            self.listener = True
-
-        if self.visitor is None:
-            self.visitor = True
-
     def _find_java(self) -> pathlib.Path:
         """Searches for a working Java Runtime Environment (JRE) set in JAVA_HOME or PATH
         environment variables. A JRE located in JAVA_HOME will be preferred.
@@ -293,15 +287,24 @@ class build_antlr(setuptools.Command):
                                                             'imported grammars into one'
                                                             'directory.'.format(grammar.name))
 
-            # build up grammar-level options
-            grammar_options = ['-Dlanguage=Python3']
             run_args = [str(java_exe)]
             run_args.extend(['-jar', str(antlr_jar)])
             run_args.extend(['-o', str(package_dir.absolute())])
+
             if library_dir:
                 run_args.extend(['-lib', str(library_dir.absolute())])
+
+            if self.listener is not None:
+                run_args.append('-listener' if self.listener == 1 else '-no-listener')
+            if self.visitor is not None:
+                run_args.append('-visitor' if self.visitor == 1 else '-no-visitor')
+
+            run_args.append(str(grammar_file))
+
+            grammar_options = ['-Dlanguage=Python3']
             if grammar_options:
                 run_args.extend(grammar_options)
+
             run_args.append(str(grammar_file))
 
             # call ANTLR parser generator
