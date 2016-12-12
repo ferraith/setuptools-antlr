@@ -195,3 +195,12 @@ Java HotSpot(TM) 64-Bit Server VM (build 1.5.0_22-b03, mixed mode)
 
         assert command.listener is False
         assert command.visitor is False
+
+    def test_camel_to_snake_case(self, command):
+        assert 'ab' == command._camel_to_snake_case('Ab')
+        assert 'ab_cd' == command._camel_to_snake_case('AbCd')
+        assert 'aa_bb_cc' == command._camel_to_snake_case('AaBbCc')
+        assert 'ab0_cd1' == command._camel_to_snake_case('Ab0Cd1')
+        assert 'abcd' == command._camel_to_snake_case('Abcd')
+        assert 'ab' == command._camel_to_snake_case('AB')
+        assert 'ab0' == command._camel_to_snake_case('AB0')
