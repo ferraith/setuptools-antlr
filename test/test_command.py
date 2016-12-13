@@ -7,7 +7,7 @@ import unittest.mock
 import pytest
 import setuptools.dist
 
-from setuptools_antlr.build_antlr import AntlrGrammar, build_antlr
+from setuptools_antlr.command import AntlrGrammar, AntlrCommand
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -45,14 +45,14 @@ class TestAntlrGrammar:
         assert excinfo.match('FooBar.g4')
 
 
-class TestBuildAntlr:
+class TestAntlrCommand:
     @pytest.fixture(autouse=True)
     def command(self):
         dist = setuptools.dist.Distribution()
-        return build_antlr(dist)
+        return AntlrCommand(dist)
 
     @unittest.mock.patch('shutil.which')
-    @unittest.mock.patch.object(build_antlr, '_validate_java')
+    @unittest.mock.patch.object(AntlrCommand, '_validate_java')
     def test_find_java_valid_java_home(self, mock_validate_java, mock_which, command):
         with unittest.mock.patch.dict('os.environ', {'JAVA_HOME': 'c:/path/to/java'}):
             mock_which.return_value = 'c:/path/to/java/bin/java.exe'
@@ -82,7 +82,7 @@ class TestBuildAntlr:
         assert java_path is None
 
     @unittest.mock.patch('shutil.which')
-    @unittest.mock.patch.object(build_antlr, '_validate_java')
+    @unittest.mock.patch.object(AntlrCommand, '_validate_java')
     def test_find_java_on_path(self, mock_validate_java, mock_which, command):
         with unittest.mock.patch.dict('os.environ'):
             del os.environ['JAVA_HOME']
@@ -142,7 +142,7 @@ Java HotSpot(TM) 64-Bit Server VM (build 1.5.0_22-b03, mixed mode)
             antlr_jar = ext_lib_dir.join(jar)
             antlr_jar.write('dummy')
 
-        with unittest.mock.patch.object(build_antlr, '_EXT_LIB_DIR', str(ext_lib_dir)):
+        with unittest.mock.patch.object(AntlrCommand, '_EXT_LIB_DIR', str(ext_lib_dir)):
             found_antlr_jar = command._find_antlr()
 
         assert found_antlr_jar == (pathlib.Path(str(ext_lib_dir), expected_antlr_jar) if expected_antlr_jar

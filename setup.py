@@ -25,7 +25,7 @@ if __name__ == '__main__':
         package_data={'setuptools_antlr': ['lib/antlr-4.5.3-complete.jar', 'lib/LICENSE.txt']},
         entry_points={
             'distutils.commands': [
-                'build_antlr = setuptools_antlr.build_antlr:build_antlr'
+                'antlr = setuptools_antlr.command:AntlrCommand'
             ]
         },
         tests_require=[

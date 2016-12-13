@@ -1,4 +1,4 @@
-"""Implements the setuptools command 'build_antlr'."""
+"""Implements the setuptools command 'antlr'."""
 import distutils.errors
 import distutils.log
 import distutils.version
@@ -77,11 +77,11 @@ class ImportGrammarError(Exception):
         return self.name
 
 
-class build_antlr(setuptools.Command):
+class AntlrCommand(setuptools.Command):
     """A setuptools command for generating ANTLR based parsers.
 
     An extra command for setuptools to generate ANTLR based parsers, lexers, listeners and visitors.
-    The build_antlr command wraps the Java based generator provided by ANTLR developers. It
+    The antlr command wraps the Java based generator provided by ANTLR developers. It
     searches for all grammar files and generates a Python package containing a modules specified in
     the user options. Please keep in mind that only grammars are generated which aren't included by
     other grammars. This prevents generation of shared content like common terminals.
@@ -89,7 +89,7 @@ class build_antlr(setuptools.Command):
     :cvar _MIN_JAVA_VERSION: Minimal version of java required by ANTLR
     :cvar _EXT_LIB_DIR: Relative path to external libs directory
     :cvar _GRAMMAR_FILE_EXT: File extension of ANTLR grammars
-    :cvar description: Description of build_antlr command
+    :cvar description: Description of antlr command
     :cvar user_options: Options which can be passed by the user
     :cvar boolean_options: Subset of user options which are binary
     :cvar negative_opt: Dictionary of user options which exclude each other
@@ -108,7 +108,8 @@ class build_antlr(setuptools.Command):
         ('listener', None, 'generate parse tree listener [default]'),
         ('no-listener', None, 'don\'t generate parse tree listener'),
         ('visitor', None, 'generate parse tree visitor'),
-        ('no-visitor', None, 'don\'t generate parse tree visitor [default]')
+        ('no-visitor', None, 'don\'t generate parse tree visitor [default]'),
+        ('grammar-options', None, 'TODO')
     ]
 
     boolean_options = ['listener', 'no-listener', 'visitor', 'no-visitor']
@@ -123,6 +124,7 @@ class build_antlr(setuptools.Command):
         self.build_lib = None
         self.listener = None
         self.visitor = None
+        self.grammar_options = None
 
     def finalize_options(self):
         """Sets final values for all the options that this command supports. This is always called
@@ -295,13 +297,13 @@ class build_antlr(setuptools.Command):
                 run_args.extend(['-lib', str(library_dir.absolute())])
 
             if self.listener is not None:
-                run_args.append('-listener' if self.listener == 1 else '-no-listener')
+                run_args.append('-listener' if self.listener else '-no-listener')
             if self.visitor is not None:
-                run_args.append('-visitor' if self.visitor == 1 else '-no-visitor')
+                run_args.append('-visitor' if self.visitor else '-no-visitor')
 
             run_args.append(str(grammar_file))
 
-            grammar_options = ['-Dlanguage=Python3']
+            grammar_options = ['-Dlanguage=Python3', '-DsuperClass=zen']
             if grammar_options:
                 run_args.extend(grammar_options)
 
@@ -319,3 +321,4 @@ class build_antlr(setuptools.Command):
             # create Python package
             init_file = pathlib.Path(package_dir, '__init__.py')
             init_file.open('wt').close()
+

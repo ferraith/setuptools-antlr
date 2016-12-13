@@ -14,7 +14,7 @@ script:
   - python setup.py test --addopts "--cov=setuptools_antlr --cov-report html"
   # build example project
   - pushd example
-  - python setup.py build_antlr bdist_wheel
+  - python setup.py antlr bdist_wheel
   - popd
 
 after_success:
