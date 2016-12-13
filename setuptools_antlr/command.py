@@ -7,6 +7,7 @@ import os.path
 import pathlib
 import re
 import shutil
+import shlex
 import subprocess
 import typing
 
@@ -105,14 +106,15 @@ class AntlrCommand(setuptools.Command):
 
     user_options = [
         ('build-lib=', 'd', 'directory to "build" (copy) to'),
+        ('atn', None, 'generate rule augmented transition network diagrams'),
         ('listener', None, 'generate parse tree listener [default]'),
         ('no-listener', None, 'don\'t generate parse tree listener'),
         ('visitor', None, 'generate parse tree visitor'),
         ('no-visitor', None, 'don\'t generate parse tree visitor [default]'),
-        ('grammar-options', None, 'TODO')
+        ('addopts=', None, "Additional options to be passed verbatim to generator")
     ]
 
-    boolean_options = ['listener', 'no-listener', 'visitor', 'no-visitor']
+    boolean_options = ['atn', 'listener', 'no-listener', 'visitor', 'no-visitor']
 
     negative_opt = {'no-listener': 'listener', 'no-visitor': 'visitor'}
 
@@ -124,7 +126,8 @@ class AntlrCommand(setuptools.Command):
         self.build_lib = None
         self.listener = None
         self.visitor = None
-        self.grammar_options = None
+        self.atn = None
+        self.addopts = []
 
     def finalize_options(self):
         """Sets final values for all the options that this command supports. This is always called
@@ -133,6 +136,11 @@ class AntlrCommand(setuptools.Command):
         """
         # find out the build directories, ie. where to install from
         self.set_undefined_options('build', ('build_lib', 'build_lib'))
+
+        if self.addopts:
+            self.addopts = shlex.split(self.addopts)
+        if not self.atn:
+            self.atn = False
 
     def _find_java(self) -> pathlib.Path:
         """Searches for a working Java Runtime Environment (JRE) set in JAVA_HOME or PATH
@@ -296,6 +304,8 @@ class AntlrCommand(setuptools.Command):
             if library_dir:
                 run_args.extend(['-lib', str(library_dir.absolute())])
 
+            if self.atn:
+                run_args.append('-atn')
             if self.listener is not None:
                 run_args.append('-listener' if self.listener else '-no-listener')
             if self.visitor is not None:
@@ -303,7 +313,7 @@ class AntlrCommand(setuptools.Command):
 
             run_args.append(str(grammar_file))
 
-            grammar_options = ['-Dlanguage=Python3', '-DsuperClass=zen']
+            grammar_options = ['-Dlanguage=Python3']
             if grammar_options:
                 run_args.extend(grammar_options)
 
