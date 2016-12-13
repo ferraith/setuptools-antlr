@@ -5,7 +5,7 @@ if __name__ == '__main__':
 
     setup(
         name='foobar',
-        version='0.1',
+        version='0.0.1',
         description='Example of use of ANTLR',
         author='Andreas Schmidl',
         author_email='Andreas.Schmidl@gmail.com',
