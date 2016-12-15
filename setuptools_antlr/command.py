@@ -61,12 +61,13 @@ class AntlrGrammar(object):
 class ImportGrammarError(Exception):
     """Raised when an imported grammar can't be found in package source directory."""
 
-    def __init__(self, name: str, parent: AntlrGrammar = None):
+    def __init__(self, name: str, parent: AntlrGrammar=None):
         """Initializes a new ImportGrammarError object.
 
         :param name: name of included grammar
         :param parent: parent grammar which includes missing grammar
         """
+        super().__init__()
         self.name = name
         self.parent = parent
 
@@ -111,7 +112,7 @@ class AntlrCommand(setuptools.Command):
         ('no-listener', None, 'don\'t generate parse tree listener'),
         ('visitor', None, 'generate parse tree visitor'),
         ('no-visitor', None, 'don\'t generate parse tree visitor [default]'),
-        ('addopts=', None, "Additional options to be passed verbatim to generator")
+        ('grammar-options=', None, "set/override a grammar-level option")
     ]
 
     boolean_options = ['atn', 'listener', 'no-listener', 'visitor', 'no-visitor']
@@ -124,10 +125,10 @@ class AntlrCommand(setuptools.Command):
         the command-line.
         """
         self.build_lib = None
-        self.listener = None
-        self.visitor = None
-        self.atn = None
-        self.addopts = []
+        self.atn = 0
+        self.listener = 1
+        self.visitor = 0
+        self.grammar_options = []
 
     def finalize_options(self):
         """Sets final values for all the options that this command supports. This is always called
@@ -137,10 +138,18 @@ class AntlrCommand(setuptools.Command):
         # find out the build directories, ie. where to install from
         self.set_undefined_options('build', ('build_lib', 'build_lib'))
 
-        if self.addopts:
-            self.addopts = shlex.split(self.addopts)
-        if not self.atn:
-            self.atn = False
+        # parse grammar-level options
+        if self.grammar_options:
+            tokens = shlex.split(self.grammar_options, comments=True)
+            self.grammar_options = dict(t.split('=', 1) for t in tokens)
+
+        # sanity check in case target language is explicitly passed by user
+        if 'language' in self.grammar_options:
+            if self.grammar_options['language'] != 'Python3':
+                raise distutils.errors.DistutilsOptionError('{} isn\'t a supported language. Only Python3 code can be '
+                                                            'generated.'.format(self.grammar_options['language']))
+        else:
+            self.grammar_options['language'] = 'Python3'
 
     def _find_java(self) -> pathlib.Path:
         """Searches for a working Java Runtime Environment (JRE) set in JAVA_HOME or PATH
@@ -306,16 +315,12 @@ class AntlrCommand(setuptools.Command):
 
             if self.atn:
                 run_args.append('-atn')
-            if self.listener is not None:
-                run_args.append('-listener' if self.listener else '-no-listener')
-            if self.visitor is not None:
-                run_args.append('-visitor' if self.visitor else '-no-visitor')
+            run_args.append('-listener' if self.listener else '-no-listener')
+            run_args.append('-visitor' if self.visitor else '-no-visitor')
 
             run_args.append(str(grammar_file))
 
-            grammar_options = ['-Dlanguage=Python3']
-            if grammar_options:
-                run_args.extend(grammar_options)
+            run_args.extend(['-D{}={}'.format(option, value) for option, value in self.grammar_options.items()])
 
             run_args.append(str(grammar_file))
 
@@ -331,4 +336,3 @@ class AntlrCommand(setuptools.Command):
             # create Python package
             init_file = pathlib.Path(package_dir, '__init__.py')
             init_file.open('wt').close()
-
