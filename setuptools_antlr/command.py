@@ -120,7 +120,7 @@ class AntlrCommand(setuptools.Command):
         ('grammar-options=', None, "set/override a grammar-level option")
     ]
 
-    boolean_options = ['atn', 'long-messages', 'listener', 'no-listener', 'visitor', 'no-visitor', 'depend']
+    boolean_options = ['atn', 'long-messages', 'listener', 'no-listener', 'visitor', 'no-visitor', 'depend', 'Werror']
 
     negative_opt = {'no-listener': 'listener', 'no-visitor': 'visitor'}
 
@@ -322,7 +322,6 @@ class AntlrCommand(setuptools.Command):
 
             if library_dir:
                 run_args.extend(['-lib', str(library_dir.absolute())])
-
             if self.atn:
                 run_args.append('-atn')
             if self.encoding:

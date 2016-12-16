@@ -181,22 +181,40 @@ Java HotSpot(TM) 64-Bit Server VM (build 1.5.0_22-b03, mixed mode)
             command._find_grammars(pathlib.Path('incomplete'))
         assert excinfo.match('CommonTerminals')
 
-    @pytest.mark.skip
     def test_finalize_options_default(self, command):
         command.finalize_options()
 
-        assert command.listener is True
-        assert command.visitor is False
+        assert command.build_lib == 'build\lib'
+        assert command.atn == 0
+        assert command.encoding is None
+        assert command.message_format is None
+        assert command.long_messages == 0
+        assert command.listener == 1
+        assert command.visitor == 0
+        assert command.depend == 0
+        assert command.Werror == 0
+        assert command.grammar_options['language'] == 'Python3'
 
-    @pytest.mark.skip
-    def test_finalize_options_configured(self, command):
-        command.listener = False
-        command.visitor = False
-
+    def test_finalize_options_grammar_options_language(self, command):
+        command.grammar_options = 'language=Python3'
         command.finalize_options()
 
-        assert command.listener is False
-        assert command.visitor is False
+        assert command.grammar_options['language'] == 'Python3'
+
+    def test_finalize_options_grammar_options_invalid(self, command):
+        command.grammar_options = 'language=Java'
+
+        with pytest.raises(distutils.errors.DistutilsOptionError) as excinfo:
+            command.finalize_options()
+        assert excinfo.match('Java')
+
+    def test_finalize_options_grammar_options_multiple(self, command):
+        command.grammar_options = 'superClass=Abc tokenVocab=Lexer'
+        command.finalize_options()
+
+        assert command.grammar_options['language'] == 'Python3'
+        assert command.grammar_options['superClass'] == 'Abc'
+        assert command.grammar_options['tokenVocab'] == 'Lexer'
 
     def test_camel_to_snake_case(self, command):
         assert 'ab' == command._camel_to_snake_case('Ab')
