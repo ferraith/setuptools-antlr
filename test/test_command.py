@@ -184,7 +184,7 @@ Java HotSpot(TM) 64-Bit Server VM (build 1.5.0_22-b03, mixed mode)
     def test_finalize_options_default(self, command):
         command.finalize_options()
 
-        assert command.build_lib == 'build\lib'
+        assert pathlib.Path(command.build_lib) == pathlib.Path('build/lib')
         assert command.atn == 0
         assert command.encoding is None
         assert command.message_format is None
