@@ -128,7 +128,7 @@ class AntlrCommand(setuptools.Command):
         self.atn = 0
         self.listener = 1
         self.visitor = 0
-        self.grammar_options = []
+        self.grammar_options = {}
 
     def finalize_options(self):
         """Sets final values for all the options that this command supports. This is always called
