@@ -108,14 +108,19 @@ class AntlrCommand(setuptools.Command):
     user_options = [
         ('build-lib=', 'd', 'directory to "build" (copy) to'),
         ('atn', None, 'generate rule augmented transition network diagrams'),
-        ('listener', None, 'generate parse tree listener [default]'),
+        ('encoding=', None, 'specify grammar file encoding e.g. euc-jp'),
+        ('message-format=', None, 'specify output style for messages in antlr, gnu, vs2005'),
+        ('long-messages', None, 'show exception details when available for errors and warnings'),
+        ('listener', None, 'generate parse tree listener (default)'),
         ('no-listener', None, 'don\'t generate parse tree listener'),
         ('visitor', None, 'generate parse tree visitor'),
-        ('no-visitor', None, 'don\'t generate parse tree visitor [default]'),
+        ('no-visitor', None, 'don\'t generate parse tree visitor (default)'),
+        ('depend', None, 'generate file dependencies'),
+        ('Werror', None, 'treat warnings as error'),
         ('grammar-options=', None, "set/override a grammar-level option")
     ]
 
-    boolean_options = ['atn', 'listener', 'no-listener', 'visitor', 'no-visitor']
+    boolean_options = ['atn', 'long-messages', 'listener', 'no-listener', 'visitor', 'no-visitor', 'depend']
 
     negative_opt = {'no-listener': 'listener', 'no-visitor': 'visitor'}
 
@@ -126,8 +131,13 @@ class AntlrCommand(setuptools.Command):
         """
         self.build_lib = None
         self.atn = 0
+        self.encoding = None
+        self.message_format = None
+        self.long_messages = 0
         self.listener = 1
         self.visitor = 0
+        self.depend = 0
+        self.Werror = 0
         self.grammar_options = {}
 
     def finalize_options(self):
@@ -315,12 +325,19 @@ class AntlrCommand(setuptools.Command):
 
             if self.atn:
                 run_args.append('-atn')
+            if self.encoding:
+                run_args.extend(['-encoding', self.encoding])
+            if self.message_format:
+                run_args.extend(['-message-format', self.message_format])
+            if self.long_messages:
+                run_args.append('-long-messages')
             run_args.append('-listener' if self.listener else '-no-listener')
             run_args.append('-visitor' if self.visitor else '-no-visitor')
-
-            run_args.append(str(grammar_file))
-
+            if self.depend:
+                run_args.append('-depend')
             run_args.extend(['-D{}={}'.format(option, value) for option, value in self.grammar_options.items()])
+            if self.Werror:
+                run_args.append('-Werror')
 
             run_args.append(str(grammar_file))
 
