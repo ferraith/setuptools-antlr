@@ -97,7 +97,7 @@ class AntlrCommand(setuptools.Command):
     :cvar negative_opt: Dictionary of user options which exclude each other
     """
 
-    _MIN_JAVA_VERSION = '1.6.0'
+    _MIN_JAVA_VERSION = '1.7.0'
 
     _EXT_LIB_DIR = 'lib'
 
