@@ -340,15 +340,28 @@ class AntlrCommand(setuptools.Command):
 
             run_args.append(str(grammar_file))
 
-            # call ANTLR parser generator
-            distutils.log.info('generating {} parser -> {}'.format(grammar.name, package_dir))
-            try:
-                subprocess.run(run_args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=True,
-                               universal_newlines=True, cwd=str(grammar_dir))
-            except subprocess.CalledProcessError as e:
-                raise distutils.errors.DistutilsExecError('{} parser couldn\'t be generated\n'
-                                                          '{}'.format(grammar.name, e.stdout))
+            package_dir.mkdir(parents=True, exist_ok=True)
 
-            # create Python package
-            init_file = pathlib.Path(package_dir, '__init__.py')
-            init_file.open('wt').close()
+            if self.depend:
+                dependency_file = pathlib.Path(package_dir, 'dependencies.txt')
+                distutils.log.info('generating {} file dependencies -> {}'.format(grammar_file, dependency_file))
+
+                # call ANTLR for file dependency generation
+                result = subprocess.run(run_args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                                        universal_newlines=True, cwd=str(grammar_dir))
+                with dependency_file.open('wt') as f:
+                    f.write(result.stdout)
+            else:
+                distutils.log.info('generating {} parser -> {}'.format(grammar.name, package_dir))
+
+                # create Python package
+                init_file = pathlib.Path(package_dir, '__init__.py')
+                init_file.open('wt').close()
+
+                # call ANTLR for parser generation
+                try:
+                    subprocess.run(run_args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=True,
+                                   universal_newlines=True, cwd=str(grammar_dir))
+                except subprocess.CalledProcessError as e:
+                    raise distutils.errors.DistutilsExecError('{} parser couldn\'t be generated\n'
+                                                              '{}'.format(grammar.name, e.stdout))
