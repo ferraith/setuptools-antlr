@@ -1,8 +1,9 @@
 """Implements the setuptools command 'antlr'."""
+import collections
+import datetime
 import distutils.errors
 import distutils.log
 import distutils.version
-import operator
 import os.path
 import pathlib
 import re
@@ -116,11 +117,16 @@ class AntlrCommand(setuptools.Command):
         ('visitor', None, 'generate parse tree visitor'),
         ('no-visitor', None, 'don\'t generate parse tree visitor (default)'),
         ('depend', None, 'generate file dependencies'),
-        ('Werror', None, 'treat warnings as error'),
-        ('grammar-options=', None, "set/override a grammar-level option")
+        ('grammar-options=', None, "set/override a grammar-level option"),
+        ('w-error', None, 'treat warnings as error'),
+        ('x-dbg-st', None, 'launch StringTemplate visualizer on generated code'),
+        ('x-dbg-st-wait', None, 'wait for STViz to close before continuing'),
+        ('x-force-atn', None, 'use the ATN simulator for all predictions'),
+        ('x-log', None, 'dump lots of logging info to antlr-<timestamp>.log')
     ]
 
-    boolean_options = ['atn', 'long-messages', 'listener', 'no-listener', 'visitor', 'no-visitor', 'depend', 'Werror']
+    boolean_options = ['atn', 'long-messages', 'listener', 'no-listener', 'visitor', 'no-visitor', 'depend', 'w-error',
+                       'x-dbg-st', 'x-dbg-st-wait', 'x-force-atn', 'x-log']
 
     negative_opt = {'no-listener': 'listener', 'no-visitor': 'visitor'}
 
@@ -137,8 +143,12 @@ class AntlrCommand(setuptools.Command):
         self.listener = 1
         self.visitor = 0
         self.depend = 0
-        self.Werror = 0
         self.grammar_options = {}
+        self.w_error = 0
+        self.x_dbg_st = 0
+        self.x_dbg_st_wait = 0
+        self.x_force_atn = 0
+        self.x_log = 0
 
     def finalize_options(self):
         """Sets final values for all the options that this command supports. This is always called
@@ -160,6 +170,13 @@ class AntlrCommand(setuptools.Command):
                                                             'generated.'.format(self.grammar_options['language']))
         else:
             self.grammar_options['language'] = 'Python3'
+
+        # sanity check for debugging options
+        if not self.x_dbg_st and self.x_dbg_st_wait:
+            distutils.log.warn('Waiting for StringTemplate visualizer (x_dbg_st_wait) without launching it on '
+                               'generated code is enabled (x_dbg_st). Launching of StringTemplate visualizer will be '
+                               'forced.')
+            self.x_dbg_st = 1
 
     def _find_java(self) -> pathlib.Path:
         """Searches for a working Java Runtime Environment (JRE) set in JAVA_HOME or PATH
@@ -210,6 +227,7 @@ class AntlrCommand(setuptools.Command):
 
         :return: a path to latest ANTLR library or None if library wasn't found
         """
+        AntlrJar = collections.namedtuple('AntlrJar', ['file', 'version'])
         antlr_jar_path = pathlib.Path(__path__[0], self._EXT_LIB_DIR)
         antlr_jar_regex = re.compile('^antlr-(\d+(?:.\d+){1,2})-complete.jar$')
 
@@ -219,12 +237,36 @@ class AntlrCommand(setuptools.Command):
             match = antlr_jar_regex.search(antlr_jar.name)
             if antlr_jar_path.joinpath(antlr_jar).is_file() and match:
                 version = distutils.version.StrictVersion(match.group(1))
-                antlr_jars.append((antlr_jar, version))
+                antlr_jars.append(AntlrJar(antlr_jar, version))
 
         if antlr_jars:
             # if more than one antlr jar was found return path of the latest version
-            latest_antlr_jar = max(antlr_jars, key=operator.itemgetter(1))[0]
-            return pathlib.Path(antlr_jar_path, latest_antlr_jar)
+            latest_antlr_jar = max(antlr_jars, key=lambda x: x.version)
+            return pathlib.Path(antlr_jar_path, latest_antlr_jar.file)
+        else:
+            return None
+
+    @classmethod
+    def _find_antlr_log(cls, log_path: pathlib.Path) -> pathlib.Path:
+        """Searches for ANTLR log files at passed location.
+
+        :return: a path to the latest ANTLR log file or None if no log file was found
+        """
+        AntlrLog = collections.namedtuple('AntlrLog', ['file', 'timestamp'])
+        antlr_log_regex = re.compile('^antlr-(\d{4}-\d{2}-\d{2}-\d{2}.\d{2}.\d{2}).log$')
+
+        # search for all _files_ matching regex in antlr_log_regex
+        antlr_logs = []
+        for log_file in log_path.iterdir():
+            match = antlr_log_regex.search(log_file.name)
+            if log_file.is_file() and match:
+                timestamp = datetime.datetime.strptime(match.group(1), '%Y-%m-%d-%H.%M.%S')
+                antlr_logs.append(AntlrLog(log_file, timestamp))
+
+        if antlr_logs:
+            # if more than one antlr log was found return path of the latest log file
+            latest_antlr_log = max(antlr_logs, key=lambda x: x.timestamp)
+            return latest_antlr_log.file
         else:
             return None
 
@@ -335,8 +377,16 @@ class AntlrCommand(setuptools.Command):
             if self.depend:
                 run_args.append('-depend')
             run_args.extend(['-D{}={}'.format(option, value) for option, value in self.grammar_options.items()])
-            if self.Werror:
+            if self.w_error:
                 run_args.append('-Werror')
+            if self.x_dbg_st:
+                run_args.append('-XdbgST')
+            if self.x_dbg_st_wait:
+                run_args.append('-XdbgSTWait')
+            if self.x_force_atn:
+                run_args.append('-Xforce-atn')
+            if self.x_log:
+                run_args.append('-Xlog')
 
             run_args.append(str(grammar_file))
 
@@ -365,3 +415,13 @@ class AntlrCommand(setuptools.Command):
                 except subprocess.CalledProcessError as e:
                     raise distutils.errors.DistutilsExecError('{} parser couldn\'t be generated\n'
                                                               '{}'.format(grammar.name, e.stdout))
+
+            if self.x_log:
+                # move logging info into build directory
+                antlr_log_file = self._find_antlr_log(grammar_dir)
+                if antlr_log_file:
+                    package_log_file = pathlib.Path(package_dir, antlr_log_file.name)
+                    distutils.log.info('dumping logging info of {} -> {}'.format(grammar_file, package_log_file))
+                    shutil.move(str(antlr_log_file), str(package_log_file))
+                else:
+                    distutils.log.warn('no logging info dumped out by ANTLR')

@@ -148,6 +148,29 @@ Java HotSpot(TM) 64-Bit Server VM (build 1.5.0_22-b03, mixed mode)
         assert found_antlr_jar == (pathlib.Path(str(ext_lib_dir), expected_antlr_jar) if expected_antlr_jar
                                    else None)
 
+    test_ids_find_antlr_log = ['single', 'multiple', 'none', 'invalid']
+
+    test_data_find_antlr_log = [
+        ({'antlr-2016-12-19-16.01.43.log'}, 'antlr-2016-12-19-16.01.43.log'),
+        ({'antlr-2016-12-18-16.01.43.log', 'antlr-2016-12-19-16.01.43.log'}, 'antlr-2016-12-19-16.01.43.log'),
+        ({}, None),
+        ({'foobar-2016-12-19-16.01.43.log'}, None)
+    ]
+
+    @pytest.mark.parametrize('available_antlr_logs, expected_antlr_log', test_data_find_antlr_log,
+                             ids=test_ids_find_antlr_log)
+    def test_find_antlr_log(self, tmpdir, command, available_antlr_logs, expected_antlr_log):
+        package_dir = tmpdir.mkdir('package')
+
+        for log in available_antlr_logs:
+            antlr_log = package_dir.join(log)
+            antlr_log.write('dummy')
+
+        found_antlr_log = command._find_antlr_log(pathlib.Path(str(package_dir)))
+
+        assert found_antlr_log == (pathlib.Path(str(package_dir), expected_antlr_log) if expected_antlr_log
+                                   else None)
+
     def test_find_grammars_empty(self, tmpdir, command):
         dsl_dir = tmpdir.mkdir('dsl')
         g = command._find_grammars(pathlib.Path(str(dsl_dir)))
@@ -192,8 +215,12 @@ Java HotSpot(TM) 64-Bit Server VM (build 1.5.0_22-b03, mixed mode)
         assert command.listener == 1
         assert command.visitor == 0
         assert command.depend == 0
-        assert command.Werror == 0
         assert command.grammar_options['language'] == 'Python3'
+        assert command.w_error == 0
+        assert command.x_dbg_st == 0
+        assert command.x_dbg_st_wait == 0
+        assert command.x_force_atn == 0
+        assert command.x_log == 0
 
     def test_finalize_options_grammar_options_language(self, command):
         command.grammar_options = 'language=Python3'
@@ -215,6 +242,15 @@ Java HotSpot(TM) 64-Bit Server VM (build 1.5.0_22-b03, mixed mode)
         assert command.grammar_options['language'] == 'Python3'
         assert command.grammar_options['superClass'] == 'Abc'
         assert command.grammar_options['tokenVocab'] == 'Lexer'
+
+    def test_finalize_options_debugging_options_invalid(self, capsys, command):
+        command.x_dbg_st = 0
+        command.x_dbg_st_wait = 1
+        command.finalize_options()
+
+        # check if error was logged
+        _, err = capsys.readouterr()
+        assert 'Waiting for StringTemplate visualizer' in err
 
     def test_camel_to_snake_case(self, command):
         assert 'ab' == command._camel_to_snake_case('Ab')
