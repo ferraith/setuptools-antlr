@@ -15,6 +15,7 @@ import typing
 import setuptools
 
 from setuptools_antlr import __path__
+from setuptools_antlr.util import camel_to_snake_case, find_java
 
 
 class AntlrGrammar(object):
@@ -178,50 +179,6 @@ class AntlrCommand(setuptools.Command):
                                'forced.')
             self.x_dbg_st = 1
 
-    def _find_java(self) -> pathlib.Path:
-        """Searches for a working Java Runtime Environment (JRE) set in JAVA_HOME or PATH
-        environment variables. A JRE located in JAVA_HOME will be preferred.
-
-        :return: a path to a working JRE or None if no JRE was found
-        """
-        # first check if a working Java is set in JAVA_HOME
-        if 'JAVA_HOME' in os.environ:
-            java_bin_dir = os.path.join(os.environ['JAVA_HOME'], 'bin')
-            java_exe = shutil.which('java', path=java_bin_dir)
-            if java_exe and self._validate_java(java_exe):
-                return pathlib.Path(java_exe)
-
-        # if Java wasn't found in JAVA_HOME fallback to PATH
-        java_exe = shutil.which('java', path=None)
-        if java_exe and self._validate_java(java_exe):
-            return pathlib.Path(java_exe)
-
-        # java wasn't found on the system
-        return None
-
-    def _validate_java(self, executable: str) -> bool:
-        """Validates a Java Runtime Environment (JRE) if it fulfills minimal version required by
-        ANTLR.
-
-        :param executable: Java executable of JRE
-        :return: flag whether JRE is at minimum required version
-        """
-        result = subprocess.run([executable, '-version'], stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                                universal_newlines=True)
-
-        if result.returncode == 0:
-            version_regex = re.compile('\d+(?:.\d+){2}(?:_\d+)')
-            version_match = version_regex.search(result.stdout)
-
-            if version_match:
-                # create normalized versions containing only valid chars
-                validated_version = distutils.version.LooseVersion(version_match.group(0).replace('_', '.'))
-                min_version = distutils.version.LooseVersion(self._MIN_JAVA_VERSION.replace('_', '.'))
-
-                return validated_version >= min_version
-
-        return False
-
     def _find_antlr(self) -> pathlib.Path:
         """Searches for ANTLR library at setuptools-antlr install location.
 
@@ -317,21 +274,12 @@ class AntlrCommand(setuptools.Command):
 
         return grammar_tree
 
-    @classmethod
-    def _camel_to_snake_case(cls, s):
-        """Converts a camel cased to a snake cased string.
-        :param s: a camel cased string
-        :return: a snake cased string
-        """
-        snake_cased = re.sub('([a-z0-9])([A-Z])', r'\1_\2', re.sub('(.)([A-Z][a-z]+)', r'\1_\2', s)).lower()
-        return snake_cased.replace('__', '_')
-
     def run(self):
         """Performs all tasks necessary to generate ANTLR based parsers for all found grammars. This
         process is controlled by the user options passed on the command line or set internally to
         default values.
         """
-        java_exe = self._find_java()
+        java_exe = find_java(self._MIN_JAVA_VERSION)
         if not java_exe:
             raise distutils.errors.DistutilsExecError('no compatible JRE was found on the system')
 
@@ -345,7 +293,7 @@ class AntlrCommand(setuptools.Command):
             # setup file and folder locations for generation
             grammar_file = grammar.path.name
             grammar_dir = grammar.path.parent
-            package_dir = pathlib.Path(self.build_lib, grammar_dir, self._camel_to_snake_case(grammar.name))
+            package_dir = pathlib.Path(self.build_lib, grammar_dir, camel_to_snake_case(grammar.name))
 
             # determine location of dependencies e.g. imported grammars and token files
             library_dir = None
