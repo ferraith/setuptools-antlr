@@ -287,31 +287,10 @@ class AntlrCommand(setuptools.Command):
         if not antlr_jar:
             raise distutils.errors.DistutilsExecError('no ANTLR jar was found in lib directory')
 
-        grammars = self._find_grammars()
-
-        for grammar in grammars:
-            # setup file and folder locations for generation
-            grammar_file = grammar.path.name
-            grammar_dir = grammar.path.parent
-            package_dir = pathlib.Path(self.build_lib, grammar_dir, camel_to_snake_case(grammar.name))
-
-            # determine location of dependencies e.g. imported grammars and token files
-            library_dir = None
-            dependency_dirs = set(g.path.parent for g in grammar.walk())
-            if len(dependency_dirs) == 1:
-                library_dir = dependency_dirs.pop()
-            elif len(dependency_dirs) > 1:
-                raise distutils.errors.DistutilsOptionError('Imported grammars of \'{}\' are located in more than one '
-                                                            'directory. This isn\'t supported by ANTLR. Move all '
-                                                            'imported grammars into one'
-                                                            'directory.'.format(grammar.name))
-
-            run_args = [str(java_exe)]
-            run_args.extend(['-jar', str(antlr_jar)])
-            run_args.extend(['-o', str(package_dir.absolute())])
-
-            if library_dir:
-                run_args.extend(['-lib', str(library_dir.absolute())])
+        # generate parser for each grammar
+        for grammar in self._find_grammars():
+            # build up ANTLR command line
+            run_args = [str(java_exe), '-jar', str(antlr_jar)]
             if self.atn:
                 run_args.append('-atn')
             if self.encoding:
@@ -336,9 +315,24 @@ class AntlrCommand(setuptools.Command):
             if self.x_log:
                 run_args.append('-Xlog')
 
-            run_args.append(str(grammar_file))
+            # determine location of dependencies e.g. imported grammars and token files
+            dependency_dirs = set(g.path.parent for g in grammar.walk())
+            if len(dependency_dirs) == 1:
+                run_args.extend(['-lib', str(dependency_dirs.pop().absolute())])
+            elif len(dependency_dirs) > 1:
+                raise distutils.errors.DistutilsOptionError('Imported grammars of \'{}\' are located in more than one '
+                                                            'directory. This isn\'t supported by ANTLR. Move all '
+                                                            'imported grammars into one'
+                                                            'directory.'.format(grammar.name))
 
+            # create package directory
+            grammar_dir = grammar.path.parent
+            package_dir = pathlib.Path(self.build_lib, grammar_dir, camel_to_snake_case(grammar.name))
             package_dir.mkdir(parents=True, exist_ok=True)
+            run_args.extend(['-o', str(package_dir.absolute())])
+
+            grammar_file = grammar.path.name
+            run_args.append(str(grammar_file))
 
             if self.depend:
                 dependency_file = pathlib.Path(package_dir, 'dependencies.txt')
@@ -357,15 +351,14 @@ class AntlrCommand(setuptools.Command):
                 init_file.open('wt').close()
 
                 # call ANTLR for parser generation
-                try:
-                    subprocess.run(run_args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=True,
-                                   universal_newlines=True, cwd=str(grammar_dir))
-                except subprocess.CalledProcessError as e:
+                result = subprocess.run(run_args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                                        universal_newlines=True, cwd=str(grammar_dir))
+                if result.returncode:
                     raise distutils.errors.DistutilsExecError('{} parser couldn\'t be generated\n'
-                                                              '{}'.format(grammar.name, e.stdout))
+                                                              '{}'.format(grammar.name, result.stdout))
 
+            # move logging info into build directory
             if self.x_log:
-                # move logging info into build directory
                 antlr_log_file = self._find_antlr_log(grammar_dir)
                 if antlr_log_file:
                     package_log_file = pathlib.Path(package_dir, antlr_log_file.name)
