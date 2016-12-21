@@ -1,11 +1,13 @@
 import distutils.errors
 import os
 import pathlib
+import subprocess
 import unittest.mock
 
 import pytest
 import setuptools.dist
 
+import setuptools_antlr.command
 from setuptools_antlr.command import AntlrGrammar, AntlrCommand
 
 
@@ -49,6 +51,19 @@ class TestAntlrCommand:
     def command(self):
         dist = setuptools.dist.Distribution()
         return AntlrCommand(dist)
+
+    @pytest.fixture()
+    def configured_command(self, monkeypatch, tmpdir, command):
+        command._find_antlr = unittest.mock.Mock(return_value=pathlib.Path('antlr-4.5.3-complete.jar'))
+        command._find_grammars = unittest.mock.Mock(return_value=[
+            AntlrGrammar(pathlib.Path('standalone/SomeGrammar.g4'))
+        ])
+        command.build_lib = str(tmpdir.mkdir('build_lib'))
+
+        monkeypatch.setattr(setuptools_antlr.command, 'find_java',
+                            unittest.mock.Mock(return_value=pathlib.Path('c:/path/to/java/bin/java.exe')))
+
+        return command
 
     test_ids_find_antlr = ['single', 'multiple', 'none', 'invalid']
 
@@ -179,3 +194,375 @@ class TestAntlrCommand:
         # check if error was logged
         _, err = capsys.readouterr()
         assert 'Waiting for StringTemplate visualizer' in err
+
+    @unittest.mock.patch('setuptools_antlr.command.find_java')
+    @unittest.mock.patch('subprocess.run')
+    @unittest.mock.patch.object(AntlrCommand, '_find_grammars')
+    def test_run_java_found(self, mock_find_grammars, mock_run, mock_find_java, tmpdir, command):
+        java_exe = pathlib.Path('c:/path/to/java/bin/java.exe')
+
+        mock_find_java.return_value = java_exe
+        mock_find_grammars.return_value = [AntlrGrammar(pathlib.Path('standalone/SomeGrammar.g4'))]
+        mock_run.return_value = subprocess.CompletedProcess([], 0)
+
+        command.build_lib = str(tmpdir.mkdir('build_lib'))
+        command.run()
+
+        args, _ = mock_run.call_args
+        assert mock_run.called
+        assert str(java_exe) in args[0]
+        assert '-jar' in args[0]
+
+    @unittest.mock.patch('setuptools_antlr.command.find_java')
+    def test_run_java_not_found(self, mock_find_java, command):
+        mock_find_java.return_value = None
+
+        with pytest.raises(distutils.errors.DistutilsExecError) as excinfo:
+            command.run()
+        assert excinfo.match('no compatible JRE')
+
+    @unittest.mock.patch('setuptools_antlr.command.find_java')
+    @unittest.mock.patch.object(AntlrCommand, '_find_antlr')
+    @unittest.mock.patch('subprocess.run')
+    @unittest.mock.patch.object(AntlrCommand, '_find_grammars')
+    def test_run_antlr_found(self, mock_find_grammars, mock_run, mock_find_antlr, mock_find_java, tmpdir, command):
+        java_exe = pathlib.Path('c:/path/to/java/bin/java.exe')
+        antlr_jar = pathlib.Path('antlr-4.5.3-complete.jar')
+
+        mock_find_java.return_value = java_exe
+        mock_find_antlr.return_value = antlr_jar
+        mock_find_grammars.return_value = [AntlrGrammar(pathlib.Path('standalone/SomeGrammar.g4'))]
+        mock_run.return_value = subprocess.CompletedProcess([], 0)
+
+        command.build_lib = str(tmpdir.mkdir('build_lib'))
+        command.run()
+
+        args, _ = mock_run.call_args
+        assert mock_run.called
+        assert str(antlr_jar) in args[0]
+
+    @unittest.mock.patch('setuptools_antlr.command.find_java')
+    @unittest.mock.patch.object(AntlrCommand, '_find_antlr')
+    def test_run_antlr_not_found(self, mock_find_antlr, mock_find_java, command):
+        java_exe = pathlib.Path('c:/path/to/java/bin/java.exe')
+
+        mock_find_java.return_value = java_exe
+        mock_find_antlr.return_value = None
+
+        with pytest.raises(distutils.errors.DistutilsExecError) as excinfo:
+            command.run()
+        assert excinfo.match('no ANTLR jar')
+
+    @pytest.mark.usefixtures('configured_command')
+    @unittest.mock.patch('subprocess.run')
+    def test_run_atn_enabled(self, mock_run, configured_command):
+        mock_run.return_value = unittest.mock.Mock(returncode=0)
+
+        configured_command.atn = 1
+        configured_command.run()
+
+        args, _ = mock_run.call_args
+        assert mock_run.called
+        assert '-atn' in args[0]
+
+    @pytest.mark.usefixtures('configured_command')
+    @unittest.mock.patch('subprocess.run')
+    def test_run_atn_disabled(self, mock_run, configured_command):
+        mock_run.return_value = unittest.mock.Mock(returncode=0)
+
+        configured_command.atn = 0
+        configured_command.run()
+
+        args, _ = mock_run.call_args
+        assert mock_run.called
+        assert '-atn' not in args[0]
+
+    @pytest.mark.usefixtures('configured_command')
+    @unittest.mock.patch('subprocess.run')
+    def test_run_encoding_specified(self, mock_run, configured_command):
+        mock_run.return_value = unittest.mock.Mock(returncode=0)
+
+        configured_command.encoding = 'euc-jp'
+        configured_command.run()
+
+        args, _ = mock_run.call_args
+        assert mock_run.called
+        assert '-encoding' in args[0]
+        assert 'euc-jp' in args[0]
+
+    @pytest.mark.usefixtures('configured_command')
+    @unittest.mock.patch('subprocess.run')
+    def test_run_encoding_not_specified(self, mock_run, configured_command):
+        mock_run.return_value = unittest.mock.Mock(returncode=0)
+
+        configured_command.encoding = None
+        configured_command.run()
+
+        args, _ = mock_run.call_args
+        assert mock_run.called
+        assert '-encoding' not in args[0]
+
+    @pytest.mark.usefixtures('configured_command')
+    @unittest.mock.patch('subprocess.run')
+    def test_run_message_format_specified(self, mock_run, configured_command):
+        mock_run.return_value = unittest.mock.Mock(returncode=0)
+
+        configured_command.message_format = 'gnu'
+        configured_command.run()
+
+        args, _ = mock_run.call_args
+        assert mock_run.called
+        assert '-message-format' in args[0]
+        assert 'gnu' in args[0]
+
+    @pytest.mark.usefixtures('configured_command')
+    @unittest.mock.patch('subprocess.run')
+    def test_run_message_format_not_specified(self, mock_run, configured_command):
+        mock_run.return_value = unittest.mock.Mock(returncode=0)
+
+        configured_command.message_format = None
+        configured_command.run()
+
+        args, _ = mock_run.call_args
+        assert mock_run.called
+        assert '-message-format' not in args[0]
+
+    @pytest.mark.usefixtures('configured_command')
+    @unittest.mock.patch('subprocess.run')
+    def test_run_long_messages_enabled(self, mock_run, configured_command):
+        mock_run.return_value = unittest.mock.Mock(returncode=0)
+
+        configured_command.long_messages = 1
+        configured_command.run()
+
+        args, _ = mock_run.call_args
+        assert mock_run.called
+        assert '-long-messages' in args[0]
+
+    @pytest.mark.usefixtures('configured_command')
+    @unittest.mock.patch('subprocess.run')
+    def test_run_long_messages_disabled(self, mock_run, configured_command):
+        mock_run.return_value = unittest.mock.Mock(returncode=0)
+
+        configured_command.long_messages = 0
+        configured_command.run()
+
+        args, _ = mock_run.call_args
+        assert mock_run.called
+        assert '-long-messages' not in args[0]
+
+    @pytest.mark.usefixtures('configured_command')
+    @unittest.mock.patch('subprocess.run')
+    def test_run_listener_enabled(self, mock_run, configured_command):
+        mock_run.return_value = unittest.mock.Mock(returncode=0)
+
+        configured_command.listener = 1
+        configured_command.run()
+
+        args, _ = mock_run.call_args
+        assert mock_run.called
+        assert '-listener' in args[0]
+
+    @pytest.mark.usefixtures('configured_command')
+    @unittest.mock.patch('subprocess.run')
+    def test_run_listener_disabled(self, mock_run, configured_command):
+        mock_run.return_value = unittest.mock.Mock(returncode=0)
+
+        configured_command.listener = 0
+        configured_command.run()
+
+        args, _ = mock_run.call_args
+        assert mock_run.called
+        assert '-no-listener' in args[0]
+
+    @pytest.mark.usefixtures('configured_command')
+    @unittest.mock.patch('subprocess.run')
+    def test_run_visitor_enabled(self, mock_run, configured_command):
+        mock_run.return_value = unittest.mock.Mock(returncode=0)
+
+        configured_command.visitor = 1
+        configured_command.run()
+
+        args, _ = mock_run.call_args
+        assert mock_run.called
+        assert '-visitor' in args[0]
+
+    @pytest.mark.usefixtures('configured_command')
+    @unittest.mock.patch('subprocess.run')
+    def test_run_visitor_disabled(self, mock_run, configured_command):
+        mock_run.return_value = unittest.mock.Mock(returncode=0)
+
+        configured_command.visitor = 0
+        configured_command.run()
+
+        args, _ = mock_run.call_args
+        assert mock_run.called
+        assert '-no-visitor' in args[0]
+
+    @pytest.mark.usefixtures('configured_command')
+    @unittest.mock.patch('subprocess.run')
+    def test_run_grammar_options_specified(self, mock_run, configured_command):
+        mock_run.return_value = unittest.mock.Mock(returncode=0)
+
+        configured_command.grammar_options = {'superClass': 'Foo', 'tokenVocab': 'Bar'}
+        configured_command.run()
+
+        args, _ = mock_run.call_args
+        assert mock_run.called
+        assert '-DsuperClass=Foo' in args[0]
+        assert '-DtokenVocab=Bar' in args[0]
+
+    @pytest.mark.usefixtures('configured_command')
+    @unittest.mock.patch('subprocess.run')
+    def test_run_grammar_options_not_specified(self, mock_run, configured_command):
+        mock_run.return_value = unittest.mock.Mock(returncode=0)
+
+        configured_command.grammar_options = {}
+        configured_command.run()
+
+        args, _ = mock_run.call_args
+        assert mock_run.called
+        assert not any(a.startswith('-D') for a in args[0])
+
+    @pytest.mark.usefixtures('configured_command')
+    @unittest.mock.patch('subprocess.run')
+    def test_run_depend_enabled(self, mock_run, configured_command):
+        mock_run.return_value = unittest.mock.Mock(returncode=0, stdout='FooParser.py : Foo.g4')
+
+        configured_command.depend = 1
+        configured_command.run()
+
+        args, _ = mock_run.call_args
+        assert mock_run.called
+        assert '-depend' in args[0]
+
+    @pytest.mark.usefixtures('configured_command')
+    @unittest.mock.patch('subprocess.run')
+    def test_run_depend_disabled(self, mock_run, configured_command):
+        mock_run.return_value = unittest.mock.Mock(returncode=0)
+        configured_command.depend = 0
+        configured_command.run()
+
+        args, _ = mock_run.call_args
+        assert mock_run.called
+        assert '-depend' not in args[0]
+
+    @pytest.mark.usefixtures('configured_command')
+    @unittest.mock.patch('subprocess.run')
+    def test_run_w_error_enabled(self, mock_run, configured_command):
+        mock_run.return_value = unittest.mock.Mock(returncode=0)
+
+        configured_command.w_error = 1
+        configured_command.run()
+
+        args, _ = mock_run.call_args
+        assert mock_run.called
+        assert '-Werror' in args[0]
+
+    @pytest.mark.usefixtures('configured_command')
+    @unittest.mock.patch('subprocess.run')
+    def test_run_w_error_disabled(self, mock_run, configured_command):
+        mock_run.return_value = unittest.mock.Mock(returncode=0)
+
+        configured_command.w_error = 0
+        configured_command.run()
+
+        args, _ = mock_run.call_args
+        assert mock_run.called
+        assert '-Werror' not in args[0]
+
+    @pytest.mark.usefixtures('configured_command')
+    @unittest.mock.patch('subprocess.run')
+    def test_run_x_dbg_st_enabled(self, mock_run, configured_command):
+        mock_run.return_value = unittest.mock.Mock(returncode=0)
+
+        configured_command.x_dbg_st = 1
+        configured_command.run()
+
+        args, _ = mock_run.call_args
+        assert mock_run.called
+        assert '-XdbgST' in args[0]
+
+    @pytest.mark.usefixtures('configured_command')
+    @unittest.mock.patch('subprocess.run')
+    def test_run_x_dbg_st_disabled(self, mock_run, configured_command):
+        mock_run.return_value = unittest.mock.Mock(returncode=0)
+
+        configured_command.x_dbg_st = 0
+        configured_command.run()
+
+        args, _ = mock_run.call_args
+        assert mock_run.called
+        assert '-XdbgST' not in args[0]
+
+    @pytest.mark.usefixtures('configured_command')
+    @unittest.mock.patch('subprocess.run')
+    def test_run_x_dbg_st_wait_enabled(self, mock_run, configured_command):
+        mock_run.return_value = unittest.mock.Mock(returncode=0)
+
+        configured_command.x_dbg_st_wait = 1
+        configured_command.run()
+
+        args, _ = mock_run.call_args
+        assert mock_run.called
+        assert '-XdbgSTWait' in args[0]
+
+    @pytest.mark.usefixtures('configured_command')
+    @unittest.mock.patch('subprocess.run')
+    def test_run_x_dbg_st_wait_disabled(self, mock_run, configured_command):
+        mock_run.return_value = unittest.mock.Mock(returncode=0)
+
+        configured_command.x_dbg_st_wait = 0
+        configured_command.run()
+
+        args, _ = mock_run.call_args
+        assert mock_run.called
+        assert '-XdbgSTWait' not in args[0]
+
+    @pytest.mark.usefixtures('configured_command')
+    @unittest.mock.patch('subprocess.run')
+    def test_run_x_force_atn_wait_enabled(self, mock_run, configured_command):
+        mock_run.return_value = unittest.mock.Mock(returncode=0)
+
+        configured_command.x_force_atn = 1
+        configured_command.run()
+
+        args, _ = mock_run.call_args
+        assert mock_run.called
+        assert '-Xforce-atn' in args[0]
+
+    @pytest.mark.usefixtures('configured_command')
+    @unittest.mock.patch('subprocess.run')
+    def test_run_x_force_atn_disabled(self, mock_run, configured_command):
+        mock_run.return_value = unittest.mock.Mock(returncode=0)
+
+        configured_command.x_force_atn = 0
+        configured_command.run()
+
+        args, _ = mock_run.call_args
+        assert mock_run.called
+        assert '-Xforce-atn' not in args[0]
+
+    @pytest.mark.usefixtures('configured_command')
+    @unittest.mock.patch('subprocess.run')
+    def test_run_x_log_enabled(self, mock_run, configured_command):
+        mock_run.return_value = unittest.mock.Mock(returncode=0)
+
+        configured_command.x_log = 1
+        configured_command.run()
+
+        args, _ = mock_run.call_args
+        assert mock_run.called
+        assert '-Xlog' in args[0]
+
+    @pytest.mark.usefixtures('configured_command')
+    @unittest.mock.patch('subprocess.run')
+    def test_run_x_log_disabled(self, mock_run, configured_command):
+        mock_run.return_value = unittest.mock.Mock(returncode=0)
+
+        configured_command.x_log = 0
+        configured_command.run()
+
+        args, _ = mock_run.call_args
+        assert mock_run.called
+        assert '-Xlog' not in args[0]
