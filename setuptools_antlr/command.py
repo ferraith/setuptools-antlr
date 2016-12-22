@@ -55,6 +55,7 @@ class AntlrGrammar(object):
             raise distutils.errors.DistutilsFileError('Can\'t read grammar "{}"'.format(e.filename))
 
     def walk(self):
+        """Returns dependent grammars by walking the dependency tree of the grammar top-down."""
         for d in self.dependencies:
             yield d
             yield from d.walk()

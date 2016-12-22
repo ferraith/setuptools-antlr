@@ -1,6 +1,7 @@
 """Setup script for setuptools-antlr."""
-import setuptools
 import sys
+
+import setuptools
 
 # need to guard script here due to reentrance while testing multiprocessing:
 if __name__ == '__main__':
@@ -37,7 +38,8 @@ if __name__ == '__main__':
         author='Andreas Schmidl',
         author_email='Andreas.Schmidl@gmail.com',
         description='Setuptools command for generating ANTLR based parsers.',
-        long_description='TODO',
+        long_description='A setuptools command for generating ANTLR based parsers which supports all user options '
+                         'provided by ANTLR to customize generation process.',
         platforms=[
             'any'
         ],
