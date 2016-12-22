@@ -232,7 +232,7 @@ class TestAntlrCommand:
         mock_find_java.return_value = java_exe
         mock_find_antlr.return_value = antlr_jar
         mock_find_grammars.return_value = [AntlrGrammar(pathlib.Path('standalone/SomeGrammar.g4'))]
-        mock_run.return_value = subprocess.CompletedProcess([], 0)
+        mock_run.return_value = unittest.mock.Mock(returncode=0)
 
         command.build_lib = str(tmpdir.mkdir('build_lib'))
         command.run()
@@ -545,8 +545,12 @@ class TestAntlrCommand:
 
     @pytest.mark.usefixtures('configured_command')
     @unittest.mock.patch('subprocess.run')
-    def test_run_x_log_enabled(self, mock_run, configured_command):
+    @unittest.mock.patch.object(AntlrCommand, '_find_antlr_log')
+    @unittest.mock.patch('shutil.move')
+    def test_run_x_log_enabled(self, mock_move, mock_find_antlr_log, mock_run, capsys, configured_command):
+        log_file = 'antlr-2016-12-19-16.01.43.log'
         mock_run.return_value = unittest.mock.Mock(returncode=0)
+        mock_find_antlr_log.return_value = pathlib.Path(log_file)
 
         configured_command.x_log = 1
         configured_command.run()
@@ -554,6 +558,10 @@ class TestAntlrCommand:
         args, _ = mock_run.call_args
         assert mock_run.called
         assert '-Xlog' in args[0]
+
+        args, _ = mock_move.call_args
+        assert mock_move.called
+        assert log_file in args[0]
 
     @pytest.mark.usefixtures('configured_command')
     @unittest.mock.patch('subprocess.run')
@@ -566,3 +574,88 @@ class TestAntlrCommand:
         args, _ = mock_run.call_args
         assert mock_run.called
         assert '-Xlog' not in args[0]
+
+    @pytest.mark.usefixtures('configured_command')
+    @unittest.mock.patch('subprocess.run')
+    @unittest.mock.patch.object(AntlrCommand, '_find_antlr_log')
+    def test_run_x_log_not_found(self, mock_find_antlr_log, mock_run, capsys, configured_command):
+        mock_run.return_value = unittest.mock.Mock(returncode=0)
+        mock_find_antlr_log.return_value = None
+
+        configured_command.x_log = 1
+        configured_command.run()
+
+        _, err = capsys.readouterr()
+        assert 'no logging info dumped out by ANTLR' in err
+
+    @pytest.mark.usefixtures('configured_command')
+    @unittest.mock.patch('subprocess.run')
+    def test_run_parser_generation_successful(self, mock_run, configured_command):
+        mock_run.return_value = unittest.mock.Mock(returncode=0)
+
+        configured_command.run()
+
+        args, kwargs = mock_run.call_args
+        assert mock_run.called
+        assert 'SomeGrammar.g4' in args[0]
+        assert kwargs['cwd'] == 'standalone'
+
+    @pytest.mark.usefixtures('configured_command')
+    @unittest.mock.patch('subprocess.run')
+    def test_run_parser_generation_failed(self, mock_run, configured_command):
+        mock_run.return_value = unittest.mock.Mock(returncode=-1)
+
+        with pytest.raises(distutils.errors.DistutilsExecError) as excinfo:
+            configured_command.run()
+        assert excinfo.match('SomeGrammar parser couldn\'t be generated')
+
+    @unittest.mock.patch('setuptools_antlr.command.find_java')
+    @unittest.mock.patch.object(AntlrCommand, '_find_antlr')
+    @unittest.mock.patch('subprocess.run')
+    @unittest.mock.patch.object(AntlrCommand, '_find_grammars')
+    def test_run_one_library_location(self, mock_find_grammars, mock_run, mock_find_antlr, mock_find_java, tmpdir,
+                                      command):
+        java_exe = pathlib.Path('c:/path/to/java/bin/java.exe')
+        antlr_jar = pathlib.Path('antlr-4.5.3-complete.jar')
+        mock_find_java.return_value = java_exe
+        mock_find_antlr.return_value = antlr_jar
+
+        grammar = AntlrGrammar(pathlib.Path('SomeGrammar.g4'))
+        grammar.dependencies = [
+            AntlrGrammar(pathlib.Path('shared/CommonTerminals.g4'))
+        ]
+        mock_find_grammars.return_value = [grammar]
+        mock_run.return_value = unittest.mock.Mock(returncode=0)
+
+        command.build_lib = str(tmpdir.mkdir('build_lib'))
+        command.run()
+
+        args, _ = mock_run.call_args
+        assert mock_run.called
+        assert '-lib' in args[0]
+        assert any(a.endswith('shared') for a in args[0])
+
+    @unittest.mock.patch('setuptools_antlr.command.find_java')
+    @unittest.mock.patch.object(AntlrCommand, '_find_antlr')
+    @unittest.mock.patch('subprocess.run')
+    @unittest.mock.patch.object(AntlrCommand, '_find_grammars')
+    def test_run_multiple_library_location(self, mock_find_grammars, mock_run, mock_find_antlr, mock_find_java, tmpdir,
+                                           command):
+        java_exe = pathlib.Path('c:/path/to/java/bin/java.exe')
+        antlr_jar = pathlib.Path('antlr-4.5.3-complete.jar')
+        mock_find_java.return_value = java_exe
+        mock_find_antlr.return_value = antlr_jar
+
+        grammar = AntlrGrammar(pathlib.Path('SomeGrammar.g4'))
+        grammar.dependencies = [
+            AntlrGrammar(pathlib.Path('terminals/common.g4')),
+            AntlrGrammar(pathlib.Path('rules/common.g4'))
+        ]
+        mock_find_grammars.return_value = [grammar]
+        mock_run.return_value = unittest.mock.Mock(returncode=0)
+
+        command.build_lib = str(tmpdir.mkdir('build_lib'))
+
+        with pytest.raises(distutils.errors.DistutilsOptionError) as excinfo:
+            command.run()
+        assert excinfo.match('Imported grammars of \'SomeGrammar\' are located in more than one directory.')
