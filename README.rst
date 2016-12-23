@@ -53,11 +53,20 @@ Usage
 Integration
 ***********
 
+.. code:: python
+
+    setup(
+        ...
+        setup_requires=['setuptools-antlr'],
+        install_requires=['antlr4-python3-runtime']
+        ...
+    )
+
 Configuration
 *************
 
-
-
+Example
+*******
 
 .. |Build Status| image:: https://travis-ci.org/ferraith/setuptools-antlr.svg
    :target: https://travis-ci.org/ferraith/setuptools-antlr
