@@ -45,10 +45,11 @@ if __name__ == '__main__':
         ],
         keywords='antlr setuptools dsl',
         classifiers=[
-            'Development Status :: 2 - Alpha',
+            'Development Status :: 3 - Alpha',
             'Intended Audience :: Developers',
             'Topic :: Software Development',
             'License :: Other/Proprietary License',
-            'Programming Language :: Python :: 3.5'
+            'Programming Language :: Python :: 3.5',
+            'Programming Language :: Python :: 3.6'
         ]
     )
