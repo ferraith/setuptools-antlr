@@ -53,6 +53,8 @@ Usage
 Integration
 ***********
 
+For a smooth user experience it's recommended to pass ``setuptools-antlr`` using the ``setup_requires`` argument of setup function. Additionally each generated parser requires the ANTLR runtime library which should be added to ``install_requires`` argument:
+
 .. code:: python
 
     setup(
@@ -62,8 +64,85 @@ Integration
         ...
     )
 
+Before generating a parser ``setuptools`` will automatically check the Python environment and download ``setuptools-antlr`` from `PyPI <https://pypi.python.org>`__ if it's missing. During the installation of the project package ``pip`` will install ``antlr4-python3-runtime`` into the Python environment.
+
 Configuration
 *************
+
+``setuptools-antlr`` provides two possibilities to configure the ANTLR parser generator.
+
+All options of ANTLR can be passed on the command line after the ``antlr`` command:
+
+::
+
+    > python setup.py antlr --visitor
+
+It's also possible to pass several options to ANTLR or execute multiple commands at once:
+
+::
+
+    > python setup.py antlr --visitor --grammar-options --grammar-options "superClass=Abc tokenVocab=SomeLexer" bdist_wheel
+
+See ``python setup.py antlr --help`` for available command line options:
+
+::
+
+    > python setup.py antlr --help
+    ...
+    Options for 'AntlrCommand' command:
+      --build-lib (-d)   directory to "build" (copy) to
+      --atn              generate rule augmented transition network diagrams
+      --encoding         specify grammar file encoding e.g. euc-jp
+      --message-format   specify output style for messages in antlr, gnu, vs2005
+      --long-messages    show exception details when available for errors and
+                         warnings
+      --listener         generate parse tree listener (default)
+      --no-listener      don't generate parse tree listener
+      --visitor          generate parse tree visitor
+      --no-visitor       don't generate parse tree visitor (default)
+      --depend           generate file dependencies
+      --grammar-options  set/override a grammar-level option
+      --w-error          treat warnings as error
+      --x-dbg-st         launch StringTemplate visualizer on generated code
+      --x-dbg-st-wait    wait for STViz to close before continuing
+      --x-force-atn      use the ATN simulator for all predictions
+      --x-log            dump lots of logging info to antlr-<timestamp>.log
+    ...
+
+The ANTLR documentation explains all `command line options <https://github.com/antlr/antlr4/blob/master/doc/tool-options.md>`__ and `grammar options <https://github.com/antlr/antlr4/blob/master/doc/options.md>`__ in detail.
+
+Apart from passing options on the command line it's also possible to add a dedicated ``[antlr]`` section to ``setup.cfg``. The following example section contains all available options:
+
+.. code:: ini
+
+    [antlr]
+    # Generate DOT graph files that represent the internal ATN data structures (yes|no); default: no
+    #atn = no
+    # Specify grammar file encoding (default: utf-8)
+    #encoding = utf-8
+    # Specify output style for messages in antlr (antlr|gnu|vs2005); default: antlr
+    #message-format = antlr
+    # Show exception details when available for errors and warnings (yes|no); default: no
+    #long-messages = no
+    # Generate a parse tree listener (yes|no); default: yes
+    #listener = yes
+    # Generate parse tree visitor (yes|no); default: no
+    visitor = yes
+    # Generate file dependencies (yes|no); default: no
+    #depend = no
+    # Set/override grammar-level options (<option>=<value> [<option>=value ...]); default: language=Python3
+    grammar-options = superClass=Abc
+                      tokenVocab=SomeLexer
+    # Treat warnings as errors (yes|no); default: no
+    #w-error = no
+    # Launch StringTemplate visualizer on generated code (yes|no); default: no
+    #x-dbg-st = no
+    # Wait for STViz to close before continuing
+    #x-dbg-st-wait = no
+    # Use the ATN simulator for all predictions (yes|no); default: no
+    #x-force-atn = no
+    # Dump lots of logging info to antlr-<timestamp>.log (yes|no); default: no
+    #x-log = no
 
 Example
 *******
