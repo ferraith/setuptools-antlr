@@ -81,7 +81,7 @@ It's also possible to pass several options to ANTLR or execute multiple commands
 
 ::
 
-    > python setup.py antlr --visitor --grammar-options --grammar-options "superClass=Abc tokenVocab=SomeLexer" bdist_wheel
+    > python setup.py antlr --visitor --grammar-options "superClass=Abc tokenVocab=SomeLexer" bdist_wheel
 
 See ``python setup.py antlr --help`` for available command line options:
 
