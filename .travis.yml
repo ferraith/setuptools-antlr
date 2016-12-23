@@ -36,7 +36,7 @@ deploy:
 
 deploy:
   provider: pypi
-  distributions: "sdist bdist_wheel"
+  distributions: sdist
   server: https://testpypi.python.org/pypi
   user: ferraith
   password:
@@ -44,3 +44,4 @@ deploy:
   on:
     branch: master
     tags: false
+    condition: $TRAVIS_PYTHON_VERSION = "3.5"
