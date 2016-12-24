@@ -30,11 +30,6 @@ deploy:
     file_glob: true
     file: "dist/*.whl"
     skip_cleanup: true
-    on:
-      repo: ferraith/setuptools-antlr
-      tags: true
-      condition: $TRAVIS_PYTHON_VERSION = "3.5"
-
   - provider: pypi
     server: https://testpypi.python.org/pypi
     user: ferraith
@@ -43,7 +38,7 @@ deploy:
     distributions: sdist bdist_wheel
     skip_cleanup: true
     skip_upload_docs: true
-    on:
-      branch: master
-      tags: false
-      condition: $TRAVIS_PYTHON_VERSION = "3.5"
+  on:
+    repo: ferraith/setuptools-antlr
+    tags: true
+    condition: $TRAVIS_PYTHON_VERSION = "3.5"
