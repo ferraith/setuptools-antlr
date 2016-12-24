@@ -167,6 +167,6 @@ To generate  parsers for all root-level grammars and build a ``foobar`` wheel pa
    :target: https://pypi.python.org/pypi/setuptools-antlr
    :alt: PyPI Status
 
-.. |GitHub Releases Status| image:: https://img.shields.io/pypi/v/setuptools-antlr.svg
+.. |GitHub Releases Status| image:: https://img.shields.io/github/release/ferraith/setuptools-antlr.svg
    :target: https://github.com/ferraith/setuptools-antlr/releases
    :alt: GitHub Releases Status
