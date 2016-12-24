@@ -24,25 +24,25 @@ before_deploy:
   python setup.py bdist_wheel
 
 deploy:
-  provider: releases
-  api_key:
-    secure: hh1po12dCGqWnf/xApPjlMcsor0uyp5DN0JSpAh2I+6O4pjSnyDKflNT48jMe1jsIADXo95mybqPzTgGECmjSg0Ey/s+HRs0ohYAeU2K5EiZjO1+pXNdrRjrrAPYrk2nXeYINYW14ht+fQtSfaPtf9HZB7Fej9soNXu640r1AmJpeBYrLq4zzcPlFVl9tWUKCzy8opBbztCkFZgj0X8EJ5VKxQsuZovp4IQoM4+ltvw/G0dKurs1Nz5mHAWfOilEcjjmxkXqmkn9ZPvAcRs9GuKJboU0FtvszovOPrs81BjZbPNSMI6fcnpiAcrqA7EbGJUZCpzA8DJp1p7sDQQnBktLBYkjyqAYm9ulVsoQkyhAnK0dekugqvE0ZVlY0OH/xsEMBwNwwAqVfSFkNtH2BXtBLY+uYGamo1nqZNmPkfbrtGzOmOcAUSe5VmBjCunFYUScAKiekzyd6IrgPh1+eJRHRYRiFuPJQqOPfb3YSAXwNIdxTE9AdcPzo3TzkBf515yT6vM6TL8vmEtpPI1+U2RwlZsTmsT46KR0Sy48LLWTid8h6mpzAFFszhYwCcxCA62HJNnZUU9OxumKlK9/7njaOUx3UkrXNSV/5MNV2zEtR3uwFclscIruaMWZ20q+zV/3es8LBl6CxONwzBROjQyBQBxQ5KpSGySh5kUsQLA=
-  file_glob: true
-  file: "dist/*.whl"
-  skip_cleanup: true
-  on:
-    repo: ferraith/setuptools-antlr
-    tags: true
+  - provider: releases
+    api_key:
+      secure: hh1po12dCGqWnf/xApPjlMcsor0uyp5DN0JSpAh2I+6O4pjSnyDKflNT48jMe1jsIADXo95mybqPzTgGECmjSg0Ey/s+HRs0ohYAeU2K5EiZjO1+pXNdrRjrrAPYrk2nXeYINYW14ht+fQtSfaPtf9HZB7Fej9soNXu640r1AmJpeBYrLq4zzcPlFVl9tWUKCzy8opBbztCkFZgj0X8EJ5VKxQsuZovp4IQoM4+ltvw/G0dKurs1Nz5mHAWfOilEcjjmxkXqmkn9ZPvAcRs9GuKJboU0FtvszovOPrs81BjZbPNSMI6fcnpiAcrqA7EbGJUZCpzA8DJp1p7sDQQnBktLBYkjyqAYm9ulVsoQkyhAnK0dekugqvE0ZVlY0OH/xsEMBwNwwAqVfSFkNtH2BXtBLY+uYGamo1nqZNmPkfbrtGzOmOcAUSe5VmBjCunFYUScAKiekzyd6IrgPh1+eJRHRYRiFuPJQqOPfb3YSAXwNIdxTE9AdcPzo3TzkBf515yT6vM6TL8vmEtpPI1+U2RwlZsTmsT46KR0Sy48LLWTid8h6mpzAFFszhYwCcxCA62HJNnZUU9OxumKlK9/7njaOUx3UkrXNSV/5MNV2zEtR3uwFclscIruaMWZ20q+zV/3es8LBl6CxONwzBROjQyBQBxQ5KpSGySh5kUsQLA=
+    file_glob: true
+    file: "dist/*.whl"
+    skip_cleanup: true
+    on:
+      repo: ferraith/setuptools-antlr
+      tags: true
+      condition: $TRAVIS_PYTHON_VERSION = "3.5"
 
-deploy:
-  provider: pypi
-  distributions: sdist bdist_wheel
-  server: https://testpypi.python.org/pypi
-  user: ferraith
-  password:
-    secure: LHvJpBsd7V4/wkaABivPc8ZTV3Bnes7ujxoMbN7wGqU/emebV/zHGjgNSaPKgw5cxo4fpdHKd8C4urUAO9ADdfaQM8ukYLtkoamyNCaPSeYfEYTmwePJr1Nw7xf/ZAw2iUDqNhtlBTOjhl5FJSRg46pfs/PN3B36a1n0/VDtKaG+BEtst6lDZelEcWO2WgrqQi0FdNjpIAseePTQSf1mXWNUX3PsXA4bxLrSe7br65ZDGJUtlZt8IcQU9Fl6baeUBvE62K626xgt8eT9AqZa46oPqmgjI554jss7tYCGqle3bAJPQk56txzfxYAzMZdOB72+velXDKbRkg16C3WmxXyF0ceqFsNOpA5sryJFHqhzD9o52HPabe/ZZqy9EF7VRWbYe+8102Hhf5oXldI7I9KvEjtmAfJm0wjF/08BqRJJ+6Kequw7M+FL5lCXl1iq4IhM9ym/ab9YbR+M2kfTqzzu53ljl0rT0gFaYwpbmLH8Why1Vnk8+Yweds9ktKknjxzKh7ecBGv9sKVI46docrgUbfI9vEIaghhjn7nit20lsQ5PBwXM8OBRHTQ3Huv4dBC5ETrvlEqIzwsUwWaqCgWn1Gyn2RDWlDp27RTQ5BdmbJaB2PFzHokux1TWeah6T9jstW1I4kdPvsBf6ZGbOMD5MzQugVyKoSP7lu2lFCI=
-  skip_upload_docs: true
-  on:
-    branch: master
-    tags: false
-    condition: $TRAVIS_PYTHON_VERSION = "3.5"
+  - provider: pypi
+    distributions: sdist bdist_wheel
+    server: https://testpypi.python.org/pypi
+    user: ferraith
+    password:
+      secure: LHvJpBsd7V4/wkaABivPc8ZTV3Bnes7ujxoMbN7wGqU/emebV/zHGjgNSaPKgw5cxo4fpdHKd8C4urUAO9ADdfaQM8ukYLtkoamyNCaPSeYfEYTmwePJr1Nw7xf/ZAw2iUDqNhtlBTOjhl5FJSRg46pfs/PN3B36a1n0/VDtKaG+BEtst6lDZelEcWO2WgrqQi0FdNjpIAseePTQSf1mXWNUX3PsXA4bxLrSe7br65ZDGJUtlZt8IcQU9Fl6baeUBvE62K626xgt8eT9AqZa46oPqmgjI554jss7tYCGqle3bAJPQk56txzfxYAzMZdOB72+velXDKbRkg16C3WmxXyF0ceqFsNOpA5sryJFHqhzD9o52HPabe/ZZqy9EF7VRWbYe+8102Hhf5oXldI7I9KvEjtmAfJm0wjF/08BqRJJ+6Kequw7M+FL5lCXl1iq4IhM9ym/ab9YbR+M2kfTqzzu53ljl0rT0gFaYwpbmLH8Why1Vnk8+Yweds9ktKknjxzKh7ecBGv9sKVI46docrgUbfI9vEIaghhjn7nit20lsQ5PBwXM8OBRHTQ3Huv4dBC5ETrvlEqIzwsUwWaqCgWn1Gyn2RDWlDp27RTQ5BdmbJaB2PFzHokux1TWeah6T9jstW1I4kdPvsBf6ZGbOMD5MzQugVyKoSP7lu2lFCI=
+    skip_upload_docs: true
+    on:
+      branch: master
+      tags: false
+      condition: $TRAVIS_PYTHON_VERSION = "3.5"
