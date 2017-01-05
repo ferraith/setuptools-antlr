@@ -118,7 +118,7 @@ Apart from passing options on the command line it's also possible to add a dedic
 
     [antlr]
     # Specify grammars to generate parsers for; default: None
-    #grammar = <root-level grammar> [<root-level-grammar> ...]
+    #grammars = <root-level grammar> [<root-level-grammar> ...]
     # Specify output directory where all output is generated; default: build/lib
     output = gen
     # Generate DOT graph files that represent the internal ATN data structures (yes|no); default: no
