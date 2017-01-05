@@ -109,6 +109,7 @@ class AntlrCommand(setuptools.Command):
     description = 'generate a parser based on ANTLR'
 
     user_options = [
+        ('grammars=', 'g', 'specify grammars to generate parsers for'),
         ('output=', 'o', 'specify output directory where all output is generated'),
         ('atn', None, 'generate rule augmented transition network diagrams'),
         ('encoding=', None, 'specify grammar file encoding e.g. euc-jp'),
@@ -119,7 +120,7 @@ class AntlrCommand(setuptools.Command):
         ('visitor', None, 'generate parse tree visitor'),
         ('no-visitor', None, 'don\'t generate parse tree visitor (default)'),
         ('depend', None, 'generate file dependencies'),
-        ('grammar-options=', None, "set/override a grammar-level option"),
+        ('grammar-options=', None, "set/override a grammar-level options"),
         ('w-error', None, 'treat warnings as error'),
         ('x-dbg-st', None, 'launch StringTemplate visualizer on generated code'),
         ('x-dbg-st-wait', None, 'wait for STViz to close before continuing'),
@@ -137,6 +138,7 @@ class AntlrCommand(setuptools.Command):
         defaults may be overridden by other commands, by the setup script, by config files, or by
         the command-line.
         """
+        self.grammars = None
         self.output = None
         self.atn = 0
         self.encoding = None
@@ -159,6 +161,10 @@ class AntlrCommand(setuptools.Command):
         """
         # find out the output directory if not specified
         self.set_undefined_options('build', ('build_lib', 'output'))
+
+        # parse grammars
+        if self.grammars:
+            self.grammars = shlex.split(self.grammars, comments=True)
 
         # parse grammar-level options
         if self.grammar_options:
@@ -288,8 +294,13 @@ class AntlrCommand(setuptools.Command):
         if not antlr_jar:
             raise distutils.errors.DistutilsExecError('no ANTLR jar was found in lib directory')
 
+        # find grammars and filter result if grammars are passed by user
+        grammars = self._find_grammars()
+        if self.grammars:
+            grammars = filter(lambda g: g.name in self.grammars, grammars)
+
         # generate parser for each grammar
-        for grammar in self._find_grammars():
+        for grammar in grammars:
             # build up ANTLR command line
             run_args = [str(java_exe), '-jar', str(antlr_jar)]
             if self.atn:

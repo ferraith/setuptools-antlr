@@ -90,6 +90,7 @@ See ``python setup.py antlr --help`` for available command line options:
     > python setup.py antlr --help
     ...
     Options for 'AntlrCommand' command:
+      --grammars (-g)    specify grammars to generate parsers for
       --output (-o)      specify output directory where all output is generated
       --atn              generate rule augmented transition network diagrams
       --encoding         specify grammar file encoding e.g. euc-jp
@@ -116,6 +117,8 @@ Apart from passing options on the command line it's also possible to add a dedic
 .. code:: ini
 
     [antlr]
+    # Specify grammars to generate parsers for; default: None
+    #grammar = <root-level grammar> [<root-level-grammar> ...]
     # Specify output directory where all output is generated; default: build/lib
     output = gen
     # Generate DOT graph files that represent the internal ATN data structures (yes|no); default: no

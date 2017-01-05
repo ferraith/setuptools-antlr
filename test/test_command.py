@@ -150,6 +150,7 @@ class TestAntlrCommand:
     def test_finalize_options_default(self, command):
         command.finalize_options()
 
+        assert command.grammars is None
         assert pathlib.Path(command.output) == pathlib.Path('build/lib')
         assert command.atn == 0
         assert command.encoding is None
@@ -164,6 +165,19 @@ class TestAntlrCommand:
         assert command.x_dbg_st_wait == 0
         assert command.x_force_atn == 0
         assert command.x_log == 0
+
+    def test_finalize_options_grammars_single(self, command):
+        command.grammars = 'Foo'
+        command.finalize_options()
+
+        assert 'Foo' in command.grammars
+
+    def test_finalize_options_grammars_multiple(self, command):
+        command.grammars = 'Foo Bar'
+        command.finalize_options()
+
+        assert 'Foo' in command.grammars
+        assert 'Bar' in command.grammars
 
     def test_finalize_options_grammar_options_language(self, command):
         command.grammar_options = 'language=Python3'
@@ -252,6 +266,56 @@ class TestAntlrCommand:
         with pytest.raises(distutils.errors.DistutilsExecError) as excinfo:
             command.run()
         assert excinfo.match('no ANTLR jar')
+
+    @pytest.mark.usefixtures('configured_command')
+    @unittest.mock.patch('subprocess.run')
+    def test_run_grammars_multiple(self, mock_run, configured_command):
+        mock_run.return_value = unittest.mock.Mock(returncode=0)
+
+        configured_command._find_grammars = unittest.mock.Mock(return_value=[
+            AntlrGrammar(pathlib.Path('Foo.g4')),
+            AntlrGrammar(pathlib.Path('Bar.g4'))
+        ])
+
+        configured_command.grammars = ['Foo']
+        configured_command.run()
+
+        args, _ = mock_run.call_args
+        assert mock_run.call_count == 1
+        assert 'Foo.g4' in args[0]
+
+    @pytest.mark.usefixtures('configured_command')
+    @unittest.mock.patch('subprocess.run')
+    def test_run_grammars_multiple(self, mock_run, configured_command):
+        mock_run.return_value = unittest.mock.Mock(returncode=0)
+
+        configured_command._find_grammars = unittest.mock.Mock(return_value=[
+            AntlrGrammar(pathlib.Path('Foo.g4')),
+            AntlrGrammar(pathlib.Path('Bar.g4'))
+        ])
+
+        configured_command.grammars = ['Foo', 'Bar']
+        configured_command.run()
+
+        assert mock_run.call_count == 2
+        args, _ = mock_run.call_args_list[0]
+        assert 'Foo.g4' in args[0]
+        args, _ = mock_run.call_args_list[1]
+        assert 'Bar.g4' in args[0]
+
+    @pytest.mark.usefixtures('configured_command')
+    @unittest.mock.patch('subprocess.run')
+    def test_run_grammars_not_found(self, mock_run, configured_command):
+        mock_run.return_value = unittest.mock.Mock(returncode=0)
+
+        configured_command._find_grammars = unittest.mock.Mock(return_value=[
+            AntlrGrammar(pathlib.Path('Foo.g4'))
+        ])
+
+        configured_command.grammars = ['Bar']
+        configured_command.run()
+
+        assert mock_run.call_count == 0
 
     @pytest.mark.usefixtures('configured_command')
     @unittest.mock.patch('subprocess.run')
