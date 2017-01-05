@@ -58,7 +58,7 @@ class TestAntlrCommand:
         command._find_grammars = unittest.mock.Mock(return_value=[
             AntlrGrammar(pathlib.Path('standalone/SomeGrammar.g4'))
         ])
-        command.build_lib = str(tmpdir.mkdir('build_lib'))
+        command.output = str(tmpdir.mkdir('gen'))
 
         monkeypatch.setattr(setuptools_antlr.command, 'find_java',
                             unittest.mock.Mock(return_value=pathlib.Path('c:/path/to/java/bin/java.exe')))
@@ -150,7 +150,7 @@ class TestAntlrCommand:
     def test_finalize_options_default(self, command):
         command.finalize_options()
 
-        assert pathlib.Path(command.build_lib) == pathlib.Path('build/lib')
+        assert pathlib.Path(command.output) == pathlib.Path('build/lib')
         assert command.atn == 0
         assert command.encoding is None
         assert command.message_format is None
@@ -205,7 +205,7 @@ class TestAntlrCommand:
         mock_find_grammars.return_value = [AntlrGrammar(pathlib.Path('standalone/SomeGrammar.g4'))]
         mock_run.return_value = subprocess.CompletedProcess([], 0)
 
-        command.build_lib = str(tmpdir.mkdir('build_lib'))
+        command.output = str(tmpdir.mkdir('gen'))
         command.run()
 
         args, _ = mock_run.call_args
@@ -234,7 +234,7 @@ class TestAntlrCommand:
         mock_find_grammars.return_value = [AntlrGrammar(pathlib.Path('standalone/SomeGrammar.g4'))]
         mock_run.return_value = unittest.mock.Mock(returncode=0)
 
-        command.build_lib = str(tmpdir.mkdir('build_lib'))
+        command.output = str(tmpdir.mkdir('gen'))
         command.run()
 
         args, _ = mock_run.call_args
@@ -627,7 +627,7 @@ class TestAntlrCommand:
         mock_find_grammars.return_value = [grammar]
         mock_run.return_value = unittest.mock.Mock(returncode=0)
 
-        command.build_lib = str(tmpdir.mkdir('build_lib'))
+        command.output = str(tmpdir.mkdir('gen'))
         command.run()
 
         args, _ = mock_run.call_args
@@ -654,7 +654,7 @@ class TestAntlrCommand:
         mock_find_grammars.return_value = [grammar]
         mock_run.return_value = unittest.mock.Mock(returncode=0)
 
-        command.build_lib = str(tmpdir.mkdir('build_lib'))
+        command.output = str(tmpdir.mkdir('gen'))
 
         with pytest.raises(distutils.errors.DistutilsOptionError) as excinfo:
             command.run()

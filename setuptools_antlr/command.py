@@ -109,7 +109,7 @@ class AntlrCommand(setuptools.Command):
     description = 'generate a parser based on ANTLR'
 
     user_options = [
-        ('build-lib=', 'd', 'directory to "build" (copy) to'),
+        ('output=', 'o', 'specify output directory where all output is generated'),
         ('atn', None, 'generate rule augmented transition network diagrams'),
         ('encoding=', None, 'specify grammar file encoding e.g. euc-jp'),
         ('message-format=', None, 'specify output style for messages in antlr, gnu, vs2005'),
@@ -137,7 +137,7 @@ class AntlrCommand(setuptools.Command):
         defaults may be overridden by other commands, by the setup script, by config files, or by
         the command-line.
         """
-        self.build_lib = None
+        self.output = None
         self.atn = 0
         self.encoding = None
         self.message_format = None
@@ -157,8 +157,8 @@ class AntlrCommand(setuptools.Command):
         as late as possible, ie. after any option assignments from the command-line or from other
         commands have been done.
         """
-        # find out the build directories, ie. where to install from
-        self.set_undefined_options('build', ('build_lib', 'build_lib'))
+        # find out the output directory if not specified
+        self.set_undefined_options('build', ('build_lib', 'output'))
 
         # parse grammar-level options
         if self.grammar_options:
@@ -328,7 +328,7 @@ class AntlrCommand(setuptools.Command):
 
             # create package directory
             grammar_dir = grammar.path.parent
-            package_dir = pathlib.Path(self.build_lib, grammar_dir, camel_to_snake_case(grammar.name))
+            package_dir = pathlib.Path(self.output, grammar_dir, camel_to_snake_case(grammar.name))
             package_dir.mkdir(parents=True, exist_ok=True)
             run_args.extend(['-o', str(package_dir.absolute())])
 
