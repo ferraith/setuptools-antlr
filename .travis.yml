@@ -2,7 +2,7 @@ language: python
 
 python:
   - '3.5'
-  - '3.6-dev'
+  - '3.6'
 
 install:
 - pip install --upgrade pip setuptools wheel pytest codecov
@@ -33,7 +33,6 @@ deploy:
     on:
       repo: ferraith/setuptools-antlr
       tags: true
-      condition: $TRAVIS_PYTHON_VERSION = "3.5"
 
   - provider: pypi
     user: ferraith
@@ -45,4 +44,3 @@ deploy:
     on:
       repo: ferraith/setuptools-antlr
       tags: true
-      condition: $TRAVIS_PYTHON_VERSION = "3.5"
