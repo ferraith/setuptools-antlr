@@ -20,7 +20,7 @@ Installation
 - setuptools 29.0.0+
 - Java JRE 1.7+
 
-The source distribution is already shipped with ANTLR 4.6. It isn't necessary to download ANTLR additionally.
+The source distribution is already shipped with ANTLR 4.7. It isn't necessary to download ANTLR additionally.
 
 After installation, the used Python environment has a new setuptools command called ``antlr``.
 
