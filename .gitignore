@@ -16,7 +16,7 @@ example/dist/
 coverage_report/
 
 # virtual environment
-env/
+venv/
 example/env/
 
 # Jetbrains IDE project files
