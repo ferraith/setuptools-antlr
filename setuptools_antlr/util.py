@@ -28,7 +28,7 @@ def validate_java(executable: str, min_java_version: str) -> bool:
                             universal_newlines=True)
 
     if result.returncode == 0:
-        version_regex = re.compile('\d+(?:.\d+){2}(?:_\d+)')
+        version_regex = re.compile('[1-9]\d*(?:(.0)*.([1-9]\d*))*(?:_[1-9]\d*)?')
         version_match = version_regex.search(result.stdout)
 
         if version_match:
