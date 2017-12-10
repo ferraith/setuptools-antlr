@@ -28,12 +28,12 @@ def validate_java(executable: str, min_java_version: str) -> bool:
                             universal_newlines=True)
 
     if result.returncode == 0:
-        version_regex = re.compile('[1-9]\d*(?:(.0)*.([1-9]\d*))*(?:_[1-9]\d*)?')
+        version_regex = re.compile('"([1-9]\d*(?:(\.0)|(\.[1-9]\d*))*(?:_\d+)?)"')
         version_match = version_regex.search(result.stdout)
 
         if version_match:
             # create normalized versions containing only valid chars
-            validated_version = distutils.version.LooseVersion(version_match.group(0).replace('_', '.'))
+            validated_version = distutils.version.LooseVersion(version_match.group(1).replace('_', '.'))
             min_version = distutils.version.LooseVersion(min_java_version.replace('_', '.'))
 
             return validated_version >= min_version

@@ -64,7 +64,8 @@ def test_find_java_on_path(mock_validate_java, mock_which):
     assert java_path is not None
 
 
-test_ids_validate_java = ['valid_current_schema', 'valid_legacy_schema', 'invalid', 'deprecated', 'corrupt']
+test_ids_validate_java = ['valid_current_schema_1', 'valid_current_schema_2', 'valid_legacy_schema_1',
+                          'valid_legacy_schema_2', 'invalid', 'deprecated', 'corrupt']
 
 test_data_validate_java = [
     (subprocess.CompletedProcess(['java.exe', '-version'], 0, stdout="""
@@ -73,14 +74,24 @@ Java(TM) SE Runtime Environment (build 9.0.1+11)
 Java HotSpot(TM) 64-Bit Server VM (build 9.0.1+11, mixed mode)
 """), True),
     (subprocess.CompletedProcess(['java.exe', '-version'], 0, stdout="""
+java version "9"
+Java(TM) SE Runtime Environment (build 9+1)
+Java HotSpot(TM) 64-Bit Server VM (build 9+1, mixed mode)
+"""), True),
+    (subprocess.CompletedProcess(['java.exe', '-version'], 0, stdout="""
 java version "1.8.0_92"
 Java(TM) SE Runtime Environment (build 1.8.0_92-b14)
 Java HotSpot(TM) 64-Bit Server VM (build 25.92-b14, mixed mode)
 """), True),
     (subprocess.CompletedProcess(['java.exe', '-version'], 0, stdout="""
-java version "1.4.0"
-Java(TM) 2 Runtime Environment, Standard Edition (build 1.4.0-b03)
-Java HotSpot(TM) 64-Bit Server VM (build 1.4.0-b03, mixed mode)
+java version "1.7.0_05"
+Java(TM) 2 Runtime Environment, Standard Edition (build 1.7.0-b05)
+Java HotSpot(TM) 64-Bit Server VM (build 1.7.0-b05, mixed mode)
+"""), True),
+    (subprocess.CompletedProcess(['java.exe', '-version'], 0, stdout="""
+java version "1.7.0-22"
+Java(TM) 2 Runtime Environment, Standard Edition (build 1.7.0_22-b03)
+Java HotSpot(TM) 64-Bit Server VM (build 1.7.0_22-b03, mixed mode)
 """), False),
     (subprocess.CompletedProcess(['java.exe', '-version'], 0, stdout="""
 java version "1.5.0_22"
