@@ -712,12 +712,12 @@ class TestAntlrCommand:
         mock_find_grammars.return_value = [grammar]
         mock_run.return_value = unittest.mock.Mock(returncode=0)
 
-        gen_dir = tmpdir.mkdir('gen')
+        gen_dir = str(tmpdir.mkdir('gen'))
         package_dir = pathlib.Path(gen_dir, 'some_grammar')
 
         init_file = pathlib.Path(package_dir, '__init__.py')
 
-        command.output = str(gen_dir)
+        command.output = gen_dir
         command.run()
 
         assert init_file.exists()
@@ -736,7 +736,7 @@ class TestAntlrCommand:
         mock_find_grammars.return_value = [grammar]
         mock_run.return_value = unittest.mock.Mock(returncode=0)
 
-        gen_dir = tmpdir.mkdir('gen')
+        gen_dir = str(tmpdir.mkdir('gen'))
         package_dir = pathlib.Path(gen_dir, 'some_grammar')
         package_dir.mkdir()
 
@@ -745,7 +745,7 @@ class TestAntlrCommand:
 
         origin_mtime_ns = init_file.stat().st_mtime_ns
 
-        command.output = str(gen_dir)
+        command.output = gen_dir
         command.run()
 
         assert init_file.stat().st_mtime_ns == origin_mtime_ns
