@@ -90,24 +90,25 @@ See ``python setup.py antlr --help`` for available command line options:
     > python setup.py antlr --help
     ...
     Options for 'AntlrCommand' command:
-      --grammars (-g)    specify grammars to generate parsers for
-      --output (-o)      specify output directory where all output is generated
-      --atn              generate rule augmented transition network diagrams
-      --encoding         specify grammar file encoding e.g. euc-jp
-      --message-format   specify output style for messages in antlr, gnu, vs2005
-      --long-messages    show exception details when available for errors and
-                         warnings
-      --listener         generate parse tree listener (default)
-      --no-listener      don't generate parse tree listener
-      --visitor          generate parse tree visitor
-      --no-visitor       don't generate parse tree visitor (default)
-      --depend           generate file dependencies
-      --grammar-options  set/override a grammar-level option
-      --w-error          treat warnings as error
-      --x-dbg-st         launch StringTemplate visualizer on generated code
-      --x-dbg-st-wait    wait for STViz to close before continuing
-      --x-force-atn      use the ATN simulator for all predictions
-      --x-log            dump lots of logging info to antlr-<timestamp>.log
+      --grammars (-g)       specify grammars to generate parsers for
+      --output (-o)         specify output directory where all output is generated
+      --atn                 generate rule augmented transition network diagrams
+      --encoding            specify grammar file encoding e.g. euc-jp
+      --message-format      specify output style for messages in antlr, gnu, vs2005
+      --long-messages       show exception details when available for errors and
+                            warnings
+      --listener            generate parse tree listener (default)
+      --no-listener         don't generate parse tree listener
+      --visitor             generate parse tree visitor
+      --no-visitor          don't generate parse tree visitor (default)
+      --depend              generate file dependencies
+      --grammar-options     set/override a grammar-level option
+      --w-error             treat warnings as error
+      --x-dbg-st            launch StringTemplate visualizer on generated code
+      --x-dbg-st-wait       wait for STViz to close before continuing
+      --x-force-atn         use the ATN simulator for all predictions
+      --x-exact-output-dir  all output goes into -o dir regardless of paths/package
+      --x-log               dump lots of logging info to antlr-<timestamp>.log
     ...
 
 The ANTLR documentation explains all `command line options <https://github.com/antlr/antlr4/blob/master/doc/tool-options.md>`__ and `grammar options <https://github.com/antlr/antlr4/blob/master/doc/options.md>`__ in detail.
@@ -144,6 +145,8 @@ Apart from passing options on the command line it's also possible to add a dedic
     #x-dbg-st = no
     # Wait for STViz to close before continuing
     #x-dbg-st-wait = no
+    # All output goes into -o dir regardless of paths/package (yes|no); default: no
+    #x-exact-output-dir = no
     # Use the ATN simulator for all predictions (yes|no); default: no
     #x-force-atn = no
     # Dump lots of logging info to antlr-<timestamp>.log (yes|no); default: no

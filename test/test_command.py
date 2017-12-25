@@ -585,6 +585,30 @@ class TestAntlrCommand:
 
     @pytest.mark.usefixtures('configured_command')
     @unittest.mock.patch('subprocess.run')
+    def test_run_x_exact_output_dir_enabled(self, mock_run, configured_command):
+        mock_run.return_value = unittest.mock.Mock(returncode=0)
+
+        configured_command.x_exact_output_dir = 1
+        configured_command.run()
+
+        args, _ = mock_run.call_args
+        assert mock_run.called
+        assert '-Xexact-output-dir' in args[0]
+
+    @pytest.mark.usefixtures('configured_command')
+    @unittest.mock.patch('subprocess.run')
+    def test_run_x_exact_output_dir_disabled(self, mock_run, configured_command):
+        mock_run.return_value = unittest.mock.Mock(returncode=0)
+
+        configured_command.x_exact_output_dir = 0
+        configured_command.run()
+
+        args, _ = mock_run.call_args
+        assert mock_run.called
+        assert '-Xexact-output-dir' not in args[0]
+
+    @pytest.mark.usefixtures('configured_command')
+    @unittest.mock.patch('subprocess.run')
     def test_run_x_force_atn_wait_enabled(self, mock_run, configured_command):
         mock_run.return_value = unittest.mock.Mock(returncode=0)
 
@@ -672,6 +696,59 @@ class TestAntlrCommand:
         with pytest.raises(distutils.errors.DistutilsExecError) as excinfo:
             configured_command.run()
         assert excinfo.match('SomeGrammar parser couldn\'t be generated')
+
+    @unittest.mock.patch('setuptools_antlr.command.find_java')
+    @unittest.mock.patch.object(AntlrCommand, '_find_antlr')
+    @unittest.mock.patch('subprocess.run')
+    @unittest.mock.patch.object(AntlrCommand, '_find_grammars')
+    def test_run_package_not_exists(self, mock_find_grammars, mock_run, mock_find_antlr, mock_find_java, tmpdir,
+                                    command):
+        java_exe = pathlib.Path('c:/path/to/java/bin/java.exe')
+        antlr_jar = pathlib.Path('antlr-4.5.3-complete.jar')
+        mock_find_java.return_value = java_exe
+        mock_find_antlr.return_value = antlr_jar
+
+        grammar = AntlrGrammar(pathlib.Path('SomeGrammar.g4'))
+        mock_find_grammars.return_value = [grammar]
+        mock_run.return_value = unittest.mock.Mock(returncode=0)
+
+        gen_dir = tmpdir.mkdir('gen')
+        package_dir = pathlib.Path(gen_dir, 'some_grammar')
+
+        init_file = pathlib.Path(package_dir, '__init__.py')
+
+        command.output = str(gen_dir)
+        command.run()
+
+        assert init_file.exists()
+
+    @unittest.mock.patch('setuptools_antlr.command.find_java')
+    @unittest.mock.patch.object(AntlrCommand, '_find_antlr')
+    @unittest.mock.patch('subprocess.run')
+    @unittest.mock.patch.object(AntlrCommand, '_find_grammars')
+    def test_run_package_exists(self, mock_find_grammars, mock_run, mock_find_antlr, mock_find_java, tmpdir, command):
+        java_exe = pathlib.Path('c:/path/to/java/bin/java.exe')
+        antlr_jar = pathlib.Path('antlr-4.5.3-complete.jar')
+        mock_find_java.return_value = java_exe
+        mock_find_antlr.return_value = antlr_jar
+
+        grammar = AntlrGrammar(pathlib.Path('SomeGrammar.g4'))
+        mock_find_grammars.return_value = [grammar]
+        mock_run.return_value = unittest.mock.Mock(returncode=0)
+
+        gen_dir = tmpdir.mkdir('gen')
+        package_dir = pathlib.Path(gen_dir, 'some_grammar')
+        package_dir.mkdir()
+
+        init_file = pathlib.Path(package_dir, '__init__.py')
+        init_file.open('wt').close()
+
+        origin_mtime_ns = init_file.stat().st_mtime_ns
+
+        command.output = str(gen_dir)
+        command.run()
+
+        assert init_file.stat().st_mtime_ns == origin_mtime_ns
 
     @unittest.mock.patch('setuptools_antlr.command.find_java')
     @unittest.mock.patch.object(AntlrCommand, '_find_antlr')

@@ -124,12 +124,13 @@ class AntlrCommand(setuptools.Command):
         ('w-error', None, 'treat warnings as error'),
         ('x-dbg-st', None, 'launch StringTemplate visualizer on generated code'),
         ('x-dbg-st-wait', None, 'wait for STViz to close before continuing'),
+        ('x-exact-output-dir', None, 'all output goes into -o dir regardless of paths/package'),
         ('x-force-atn', None, 'use the ATN simulator for all predictions'),
         ('x-log', None, 'dump lots of logging info to antlr-<timestamp>.log')
     ]
 
     boolean_options = ['atn', 'long-messages', 'listener', 'no-listener', 'visitor', 'no-visitor', 'depend', 'w-error',
-                       'x-dbg-st', 'x-dbg-st-wait', 'x-force-atn', 'x-log']
+                       'x-dbg-st', 'x-dbg-st-wait', 'x-exact-output-dir', 'x-force-atn', 'x-log']
 
     negative_opt = {'no-listener': 'listener', 'no-visitor': 'visitor'}
 
@@ -151,6 +152,7 @@ class AntlrCommand(setuptools.Command):
         self.w_error = 0
         self.x_dbg_st = 0
         self.x_dbg_st_wait = 0
+        self.x_exact_output_dir = 0
         self.x_force_atn = 0
         self.x_log = 0
 
@@ -322,6 +324,8 @@ class AntlrCommand(setuptools.Command):
                 run_args.append('-XdbgST')
             if self.x_dbg_st_wait:
                 run_args.append('-XdbgSTWait')
+            if self.x_exact_output_dir:
+                run_args.append('-Xexact-output-dir')
             if self.x_force_atn:
                 run_args.append('-Xforce-atn')
             if self.x_log:
@@ -339,7 +343,10 @@ class AntlrCommand(setuptools.Command):
 
             # create package directory
             grammar_dir = grammar.path.parent
-            package_dir = pathlib.Path(self.output, grammar_dir, camel_to_snake_case(grammar.name))
+            if self.x_exact_output_dir:
+                package_dir = pathlib.Path(self.output)
+            else:
+                package_dir = pathlib.Path(self.output, grammar_dir, camel_to_snake_case(grammar.name))
             package_dir.mkdir(parents=True, exist_ok=True)
             run_args.extend(['-o', str(package_dir.absolute())])
 
@@ -360,7 +367,8 @@ class AntlrCommand(setuptools.Command):
 
                 # create Python package
                 init_file = pathlib.Path(package_dir, '__init__.py')
-                init_file.open('wt').close()
+                if not init_file.exists():
+                    init_file.open('wt').close()
 
                 # call ANTLR for parser generation
                 result = subprocess.run(run_args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
