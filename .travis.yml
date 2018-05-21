@@ -33,6 +33,7 @@ deploy:
     on:
       repo: ferraith/setuptools-antlr
       tags: true
+      python: '3.6'
 
   - provider: pypi
     user: ferraith
@@ -44,3 +45,4 @@ deploy:
     on:
       repo: ferraith/setuptools-antlr
       tags: true
+      python: '3.6'
