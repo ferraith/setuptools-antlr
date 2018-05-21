@@ -91,7 +91,7 @@ See ``python setup.py antlr --help`` for available command line options:
     ...
     Options for 'AntlrCommand' command:
       --grammars (-g)       specify grammars to generate parsers for
-      --output (-o)         specify output directory where all output is generated
+      --output (-o)         specify output directories where output is generated
       --atn                 generate rule augmented transition network diagrams
       --encoding            specify grammar file encoding e.g. euc-jp
       --message-format      specify output style for messages in antlr, gnu, vs2005
@@ -107,7 +107,7 @@ See ``python setup.py antlr --help`` for available command line options:
       --x-dbg-st            launch StringTemplate visualizer on generated code
       --x-dbg-st-wait       wait for STViz to close before continuing
       --x-force-atn         use the ATN simulator for all predictions
-      --x-exact-output-dir  all output goes into -o dir regardless of paths/package
+      --x-exact-output-dir  output goes into -o directories regardless of paths/package
       --x-log               dump lots of logging info to antlr-<timestamp>.log
     ...
 
@@ -120,8 +120,8 @@ Apart from passing options on the command line it's also possible to add a dedic
     [antlr]
     # Specify grammars to generate parsers for; default: None
     #grammars = <root-level grammar> [<root-level-grammar> ...]
-    # Specify output directory where all output is generated; default: build/lib
-    output = gen
+    # Specify output directories where all output is generated; default: build/lib
+    output = default=gen
     # Generate DOT graph files that represent the internal ATN data structures (yes|no); default: no
     #atn = no
     # Specify grammar file encoding; default: utf-8

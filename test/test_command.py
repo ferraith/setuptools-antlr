@@ -58,7 +58,7 @@ class TestAntlrCommand:
         command._find_grammars = unittest.mock.Mock(return_value=[
             AntlrGrammar(pathlib.Path('standalone/SomeGrammar.g4'))
         ])
-        command.output = str(tmpdir.mkdir('gen'))
+        command.output['default'] = str(tmpdir.mkdir('gen'))
 
         monkeypatch.setattr(setuptools_antlr.command, 'find_java',
                             unittest.mock.Mock(return_value=pathlib.Path('c:/path/to/java/bin/java.exe')))
@@ -151,7 +151,7 @@ class TestAntlrCommand:
         command.finalize_options()
 
         assert command.grammars is None
-        assert pathlib.Path(command.output) == pathlib.Path('build/lib')
+        assert pathlib.Path(command.output['default']) == pathlib.Path('build/lib')
         assert command.atn == 0
         assert command.encoding is None
         assert command.message_format is None
@@ -178,6 +178,25 @@ class TestAntlrCommand:
 
         assert 'Foo' in command.grammars
         assert 'Bar' in command.grammars
+
+    def test_finalize_options_default_output_dir(self, command):
+        command.output = 'default=build/lib'
+        command.finalize_options()
+
+        assert pathlib.Path(command.output['default']) == pathlib.Path('build/lib')
+
+    def test_finalize_options_custom_output_dir(self, command):
+        command.output = 'Foo=build/lib/custom'
+        command.finalize_options()
+
+        assert pathlib.Path(command.output['default']) == pathlib.Path('build/lib')
+        assert pathlib.Path(command.output['Foo']) == pathlib.Path('build/lib/custom')
+
+    def test_finalize_options_custom_default_output_dir(self, command):
+        command.output = 'default=build/lib/custom'
+        command.finalize_options()
+
+        assert pathlib.Path(command.output['default']) == pathlib.Path('build/lib/custom')
 
     def test_finalize_options_grammar_options_language(self, command):
         command.grammar_options = 'language=Python3'
@@ -219,7 +238,7 @@ class TestAntlrCommand:
         mock_find_grammars.return_value = [AntlrGrammar(pathlib.Path('standalone/SomeGrammar.g4'))]
         mock_run.return_value = subprocess.CompletedProcess([], 0)
 
-        command.output = str(tmpdir.mkdir('gen'))
+        command.output['default'] = str(tmpdir.mkdir('gen'))
         command.run()
 
         args, _ = mock_run.call_args
@@ -248,7 +267,7 @@ class TestAntlrCommand:
         mock_find_grammars.return_value = [AntlrGrammar(pathlib.Path('standalone/SomeGrammar.g4'))]
         mock_run.return_value = unittest.mock.Mock(returncode=0)
 
-        command.output = str(tmpdir.mkdir('gen'))
+        command.output['default'] = str(tmpdir.mkdir('gen'))
         command.run()
 
         args, _ = mock_run.call_args
@@ -266,6 +285,24 @@ class TestAntlrCommand:
         with pytest.raises(distutils.errors.DistutilsExecError) as excinfo:
             command.run()
         assert excinfo.match('no ANTLR jar')
+
+    @pytest.mark.usefixtures('configured_command')
+    @unittest.mock.patch('subprocess.run')
+    def test_run_custom_output_dir(self, mock_run, configured_command):
+        mock_run.return_value = unittest.mock.Mock(returncode=0)
+
+        configured_command._find_grammars = unittest.mock.Mock(return_value=[
+            AntlrGrammar(pathlib.Path('Foo.g4')),
+        ])
+
+        custom_output_dir = 'build/lib/custom'
+        configured_command.output['Foo'] = custom_output_dir
+        configured_command.run()
+
+        args, _ = mock_run.call_args
+        assert mock_run.call_count == 1
+        custom_package_path = pathlib.Path(custom_output_dir, 'foo').absolute()
+        assert any(custom_package_path == pathlib.Path(a) for a in args[0])
 
     @pytest.mark.usefixtures('configured_command')
     @unittest.mock.patch('subprocess.run')
@@ -717,7 +754,7 @@ class TestAntlrCommand:
 
         init_file = pathlib.Path(package_dir, '__init__.py')
 
-        command.output = gen_dir
+        command.output['default'] = gen_dir
         command.run()
 
         assert init_file.exists()
@@ -745,7 +782,7 @@ class TestAntlrCommand:
 
         origin_mtime_ns = init_file.stat().st_mtime_ns
 
-        command.output = gen_dir
+        command.output['default'] = gen_dir
         command.run()
 
         assert init_file.stat().st_mtime_ns == origin_mtime_ns
@@ -768,7 +805,7 @@ class TestAntlrCommand:
         mock_find_grammars.return_value = [grammar]
         mock_run.return_value = unittest.mock.Mock(returncode=0)
 
-        command.output = str(tmpdir.mkdir('gen'))
+        command.output['default'] = str(tmpdir.mkdir('gen'))
         command.run()
 
         args, _ = mock_run.call_args
@@ -795,7 +832,7 @@ class TestAntlrCommand:
         mock_find_grammars.return_value = [grammar]
         mock_run.return_value = unittest.mock.Mock(returncode=0)
 
-        command.output = str(tmpdir.mkdir('gen'))
+        command.output['default'] = str(tmpdir.mkdir('gen'))
 
         with pytest.raises(distutils.errors.DistutilsOptionError) as excinfo:
             command.run()

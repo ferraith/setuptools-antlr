@@ -110,7 +110,7 @@ class AntlrCommand(setuptools.Command):
 
     user_options = [
         ('grammars=', 'g', 'specify grammars to generate parsers for'),
-        ('output=', 'o', 'specify output directory where all output is generated'),
+        ('output=', 'o', 'specify output directories where output is generated'),
         ('atn', None, 'generate rule augmented transition network diagrams'),
         ('encoding=', None, 'specify grammar file encoding e.g. euc-jp'),
         ('message-format=', None, 'specify output style for messages in antlr, gnu, vs2005'),
@@ -124,7 +124,7 @@ class AntlrCommand(setuptools.Command):
         ('w-error', None, 'treat warnings as error'),
         ('x-dbg-st', None, 'launch StringTemplate visualizer on generated code'),
         ('x-dbg-st-wait', None, 'wait for STViz to close before continuing'),
-        ('x-exact-output-dir', None, 'all output goes into -o dir regardless of paths/package'),
+        ('x-exact-output-dir', None, 'output goes into -o directories regardless of paths/package'),
         ('x-force-atn', None, 'use the ATN simulator for all predictions'),
         ('x-log', None, 'dump lots of logging info to antlr-<timestamp>.log')
     ]
@@ -140,7 +140,7 @@ class AntlrCommand(setuptools.Command):
         the command-line.
         """
         self.grammars = None
-        self.output = None
+        self.output = {}
         self.atn = 0
         self.encoding = None
         self.message_format = None
@@ -156,17 +156,27 @@ class AntlrCommand(setuptools.Command):
         self.x_force_atn = 0
         self.x_log = 0
 
+    def _get_cmd_option(self, cmd, option) -> str:
+        src_cmd_obj = self.distribution.get_command_obj(cmd)
+        src_cmd_obj.ensure_finalized()
+        return getattr(src_cmd_obj, option)
+
     def finalize_options(self):
         """Sets final values for all the options that this command supports. This is always called
         as late as possible, ie. after any option assignments from the command-line or from other
         commands have been done.
         """
-        # find out the output directory if not specified
-        self.set_undefined_options('build', ('build_lib', 'output'))
-
         # parse grammars
         if self.grammars:
             self.grammars = shlex.split(self.grammars, comments=True)
+
+        # parse output option
+        if self.output:
+            tokens = shlex.split(self.output, comments=True)
+            self.output = dict(t.split('=', 1) for t in tokens)
+        # if default directory isn't specified set lib directory of build path as default
+        if 'default' not in self.output:
+            self.output['default'] = self._get_cmd_option('build', 'build_lib')
 
         # parse grammar-level options
         if self.grammar_options:
@@ -341,12 +351,18 @@ class AntlrCommand(setuptools.Command):
                                                             'imported grammars into one'
                                                             'directory.'.format(grammar.name))
 
-            # create package directory
+            # build up package path
             grammar_dir = grammar.path.parent
-            if self.x_exact_output_dir:
-                package_dir = pathlib.Path(self.output)
+            if grammar.name in self.output:
+                output_dir = self.output[grammar.name]
             else:
-                package_dir = pathlib.Path(self.output, grammar_dir, camel_to_snake_case(grammar.name))
+                output_dir = self.output['default']
+            if self.x_exact_output_dir:
+                package_dir = pathlib.Path(output_dir)
+            else:
+                package_dir = pathlib.Path(output_dir, grammar_dir, camel_to_snake_case(grammar.name))
+
+            # create package directory
             package_dir.mkdir(parents=True, exist_ok=True)
             run_args.extend(['-o', str(package_dir.absolute())])
 
