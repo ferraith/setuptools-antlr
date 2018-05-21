@@ -21,7 +21,7 @@ if __name__ == '__main__':
 
     setuptools.setup(
         name='setuptools-antlr',
-        version='0.1.0',
+        version='0.1.1',
         packages=setuptools.find_packages(),
         package_data={'setuptools_antlr': ['lib/antlr-4.7.1-complete.jar', 'lib/LICENSE.txt']},
         entry_points={
