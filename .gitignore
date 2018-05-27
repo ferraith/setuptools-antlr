@@ -19,5 +19,6 @@ coverage_report/
 venv/
 example/env/
 
-# Jetbrains IDE project files
+# editor files
 .idea/
+.vscode/
