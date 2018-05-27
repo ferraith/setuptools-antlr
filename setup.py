@@ -5,10 +5,6 @@ import setuptools
 
 # need to guard script here due to reentrance while testing multiprocessing:
 if __name__ == '__main__':
-    if sys.version_info < (3, 5):
-        print('This Python version isn\'t supported, minimal version 3.5 is required.')
-        exit(1)
-
     needs_pytest = {'pytest', 'test', 'ptr'}.intersection(sys.argv)
     pytest_runner_opt = ['pytest-runner>=2.0,<3dev'] if needs_pytest else []
 
@@ -29,6 +25,7 @@ if __name__ == '__main__':
                 'antlr = setuptools_antlr.command:AntlrCommand'
             ]
         },
+        python_requires='>=3.5',
         tests_require=[
             'pytest-cov'
         ],
