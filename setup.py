@@ -26,9 +26,7 @@ if __name__ == '__main__':
             ]
         },
         python_requires='>=3.5',
-        tests_require=[
-            'pytest-cov'
-        ],
+        tests_require=['pytest'],
         setup_requires=pytest_runner_opt + setuptools_lint_opt + flake8_opt,
         url='https://github.com/ferraith/setuptools-antlr',
         license='MIT',
@@ -36,9 +34,7 @@ if __name__ == '__main__':
         author_email='Andreas.Schmidl@gmail.com',
         description='Setuptools command for generating ANTLR based parsers.',
         long_description=open('README.rst').read(),
-        platforms=[
-            'any'
-        ],
+        platforms=['any'],
         keywords='antlr setuptools dsl',
         classifiers=[
             'Development Status :: 4 - Beta',
