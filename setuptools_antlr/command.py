@@ -156,11 +156,6 @@ class AntlrCommand(setuptools.Command):
         self.x_force_atn = 0
         self.x_log = 0
 
-    def _get_cmd_option(self, cmd, option) -> str:
-        src_cmd_obj = self.distribution.get_command_obj(cmd)
-        src_cmd_obj.ensure_finalized()
-        return getattr(src_cmd_obj, option)
-
     def finalize_options(self):
         """Sets final values for all the options that this command supports. This is always called
         as late as possible, ie. after any option assignments from the command-line or from other
@@ -174,9 +169,9 @@ class AntlrCommand(setuptools.Command):
         if self.output:
             tokens = shlex.split(self.output, comments=True)
             self.output = dict(t.split('=', 1) for t in tokens)
-        # if default directory isn't specified set lib directory of build path as default
+        # if default directory isn't specified set current directory as default
         if 'default' not in self.output:
-            self.output['default'] = self._get_cmd_option('build', 'build_lib')
+            self.output['default'] = '.'
 
         # parse grammar-level options
         if self.grammar_options:
