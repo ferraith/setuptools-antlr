@@ -151,7 +151,7 @@ class TestAntlrCommand:
         command.finalize_options()
 
         assert command.grammars is None
-        assert pathlib.Path(command.output['default']) == pathlib.Path('build/lib')
+        assert pathlib.Path(command.output['default']) == pathlib.Path('.')
         assert command.atn == 0
         assert command.encoding is None
         assert command.message_format is None
@@ -180,23 +180,23 @@ class TestAntlrCommand:
         assert 'Bar' in command.grammars
 
     def test_finalize_options_default_output_dir(self, command):
-        command.output = 'default=build/lib'
+        command.output = 'default=.'
         command.finalize_options()
 
-        assert pathlib.Path(command.output['default']) == pathlib.Path('build/lib')
+        assert pathlib.Path(command.output['default']) == pathlib.Path('.')
 
     def test_finalize_options_custom_output_dir(self, command):
-        command.output = 'Foo=build/lib/custom'
+        command.output = 'Foo=custom'
         command.finalize_options()
 
-        assert pathlib.Path(command.output['default']) == pathlib.Path('build/lib')
-        assert pathlib.Path(command.output['Foo']) == pathlib.Path('build/lib/custom')
+        assert pathlib.Path(command.output['default']) == pathlib.Path('.')
+        assert pathlib.Path(command.output['Foo']) == pathlib.Path('custom')
 
     def test_finalize_options_custom_default_output_dir(self, command):
-        command.output = 'default=build/lib/custom'
+        command.output = 'default=custom'
         command.finalize_options()
 
-        assert pathlib.Path(command.output['default']) == pathlib.Path('build/lib/custom')
+        assert pathlib.Path(command.output['default']) == pathlib.Path('custom')
 
     def test_finalize_options_grammar_options_language(self, command):
         command.grammar_options = 'language=Python3'
@@ -288,14 +288,14 @@ class TestAntlrCommand:
 
     @pytest.mark.usefixtures('configured_command')
     @unittest.mock.patch('subprocess.run')
-    def test_run_custom_output_dir(self, mock_run, configured_command):
+    def test_run_custom_output_dir(self, mock_run, tmpdir, configured_command):
         mock_run.return_value = unittest.mock.Mock(returncode=0)
 
         configured_command._find_grammars = unittest.mock.Mock(return_value=[
             AntlrGrammar(pathlib.Path('Foo.g4')),
         ])
 
-        custom_output_dir = 'build/lib/custom'
+        custom_output_dir = str(tmpdir.mkdir('custom'))
         configured_command.output['Foo'] = custom_output_dir
         configured_command.run()
 
