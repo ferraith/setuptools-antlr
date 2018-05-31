@@ -169,7 +169,7 @@ class AntlrCommand(setuptools.Command):
         if self.output:
             tokens = shlex.split(self.output, comments=True)
             self.output = dict(t.split('=', 1) for t in tokens)
-        # if default directory isn't specified set current directory as default
+        # if default directory isn't specified set package source directory as default
         if 'default' not in self.output:
             self.output['default'] = '.'
 
