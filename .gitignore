@@ -11,7 +11,7 @@ example/dist/
 *.egg-info/
 
 # test and coverage data
-.cache/
+.pytest_cache/
 .coverage
 coverage_report/
 
