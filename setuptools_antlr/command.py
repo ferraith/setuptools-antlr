@@ -169,7 +169,7 @@ class AntlrCommand(setuptools.Command):
         if self.output:
             tokens = shlex.split(self.output, comments=True)
             self.output = dict(t.split('=', 1) for t in tokens)
-        # if default directory isn't specified set package source directory as default
+        # if default directory isn't specified set base directory as default
         if 'default' not in self.output:
             self.output['default'] = '.'
 
@@ -242,7 +242,7 @@ class AntlrCommand(setuptools.Command):
             return None
 
     def _find_grammars(self, base_path: pathlib.Path=pathlib.Path('.')) -> typing.List[AntlrGrammar]:
-        """Searches for all ANTLR grammars in package source directory and returns a list of it.
+        """Searches for all ANTLR grammars starting from base directory and returns a list of it.
         Only grammars which aren't included by other grammars are part of this list.
 
         :param base_path: base path to search for ANTLR grammars
@@ -287,6 +287,20 @@ class AntlrCommand(setuptools.Command):
                                      grammars)
 
         return grammar_tree
+
+    @classmethod
+    def _create_init_file(cls, path: pathlib.Path) -> bool:
+        """Creates a __init__.py file if it doesn't exist.
+
+        :param path: path where init file should be created
+        :return: True if init file was created
+        """
+        init_file = pathlib.Path(path, '__init__.py')
+        try:
+            init_file.touch(exist_ok=False)
+        except FileExistsError:
+            return False
+        return True
 
     def run(self):
         """Performs all tasks necessary to generate ANTLR based parsers for all found grammars. This
@@ -359,7 +373,7 @@ class AntlrCommand(setuptools.Command):
 
             # create package directory
             package_dir.mkdir(parents=True, exist_ok=True)
-            run_args.extend(['-o', str(package_dir.absolute())])
+            run_args.extend(['-o', str(package_dir.resolve())])
 
             grammar_file = grammar.path.name
             run_args.append(str(grammar_file))
@@ -376,10 +390,15 @@ class AntlrCommand(setuptools.Command):
             else:
                 distutils.log.info('generating {} parser -> {}'.format(grammar.name, package_dir))
 
-                # create Python package
-                init_file = pathlib.Path(package_dir, '__init__.py')
-                if not init_file.exists():
-                    init_file.open('wt').close()
+                # create Python package including parent packages if don't exist
+                self._create_init_file(package_dir)
+
+                base_dir = pathlib.Path('.').resolve()
+                parent_dir = package_dir.resolve().parent
+
+                while base_dir < parent_dir:
+                    self._create_init_file(parent_dir)
+                    parent_dir = parent_dir.parent
 
                 # call ANTLR for parser generation
                 result = subprocess.run(run_args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
