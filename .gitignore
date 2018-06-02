@@ -17,7 +17,11 @@ coverage_report/
 
 # virtual environment
 venv/
-example/env/
+
+# example
+example/foobar/dsl/__init__.py
+example/foobar/dsl/bar/
+example/foobar/dsl/foo/
 
 # editor files
 .idea/
