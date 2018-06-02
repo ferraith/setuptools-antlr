@@ -155,7 +155,7 @@ Apart from passing options on the command line it's also possible to add a dedic
 Example
 *******
 
-Alongside the ``setuptools-antlr`` source code a example project called ``foobar`` is provided in the ``example`` directory. This example consists of the two ANTLR grammars ``Foo`` and ``Bar``. During the execution of ``setuptools-antlr`` two Python packages will be generated into the ``build`` directory containing a parser for each grammar.
+Alongside the ``setuptools-antlr`` source code a example project called ``foobar`` is provided in the ``example`` directory. This example consists of the two ANTLR grammars ``Foo`` and ``Bar``. During the execution of ``setuptools-antlr`` two Python packages will be generated into the ``foobar`` package directory containing a parser for each grammar.
 
 To generate  parsers for all root-level grammars and build a ``foobar`` wheel package execute the following command:
 
