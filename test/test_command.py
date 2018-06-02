@@ -147,11 +147,33 @@ class TestAntlrCommand:
             command._find_grammars(pathlib.Path('incomplete'))
         assert excinfo.match('CommonTerminals')
 
+    def test_create_init_file_not_exists(self, tmpdir, command):
+        path = pathlib.Path(str(tmpdir.mkdir('package')))
+
+        init_file = pathlib.Path(path, '__init__.py')
+
+        created = command._create_init_file(path)
+
+        assert created
+        assert init_file.exists()
+
+    def test_create_init_file_exists(self, tmpdir, command):
+        path = pathlib.Path(str(tmpdir.mkdir('package')))
+
+        init_file = pathlib.Path(path, '__init__.py')
+        init_file.touch()
+        origin_init_mtime_ns = init_file.stat().st_mtime_ns
+
+        created = command._create_init_file(path)
+
+        assert not created
+        assert init_file.stat().st_mtime_ns == origin_init_mtime_ns
+
     def test_finalize_options_default(self, command):
         command.finalize_options()
 
         assert command.grammars is None
-        assert pathlib.Path(command.output['default']) == pathlib.Path('build/lib')
+        assert pathlib.Path(command.output['default']) == pathlib.Path('.')
         assert command.atn == 0
         assert command.encoding is None
         assert command.message_format is None
@@ -180,23 +202,23 @@ class TestAntlrCommand:
         assert 'Bar' in command.grammars
 
     def test_finalize_options_default_output_dir(self, command):
-        command.output = 'default=build/lib'
+        command.output = 'default=.'
         command.finalize_options()
 
-        assert pathlib.Path(command.output['default']) == pathlib.Path('build/lib')
+        assert pathlib.Path(command.output['default']) == pathlib.Path('.')
 
     def test_finalize_options_custom_output_dir(self, command):
-        command.output = 'Foo=build/lib/custom'
+        command.output = 'Foo=custom'
         command.finalize_options()
 
-        assert pathlib.Path(command.output['default']) == pathlib.Path('build/lib')
-        assert pathlib.Path(command.output['Foo']) == pathlib.Path('build/lib/custom')
+        assert pathlib.Path(command.output['default']) == pathlib.Path('.')
+        assert pathlib.Path(command.output['Foo']) == pathlib.Path('custom')
 
     def test_finalize_options_custom_default_output_dir(self, command):
-        command.output = 'default=build/lib/custom'
+        command.output = 'default=custom'
         command.finalize_options()
 
-        assert pathlib.Path(command.output['default']) == pathlib.Path('build/lib/custom')
+        assert pathlib.Path(command.output['default']) == pathlib.Path('custom')
 
     def test_finalize_options_grammar_options_language(self, command):
         command.grammar_options = 'language=Python3'
@@ -288,14 +310,14 @@ class TestAntlrCommand:
 
     @pytest.mark.usefixtures('configured_command')
     @unittest.mock.patch('subprocess.run')
-    def test_run_custom_output_dir(self, mock_run, configured_command):
+    def test_run_custom_output_dir(self, mock_run, tmpdir, configured_command):
         mock_run.return_value = unittest.mock.Mock(returncode=0)
 
         configured_command._find_grammars = unittest.mock.Mock(return_value=[
             AntlrGrammar(pathlib.Path('Foo.g4')),
         ])
 
-        custom_output_dir = 'build/lib/custom'
+        custom_output_dir = str(tmpdir.mkdir('custom'))
         configured_command.output['Foo'] = custom_output_dir
         configured_command.run()
 
@@ -749,15 +771,20 @@ class TestAntlrCommand:
         mock_find_grammars.return_value = [grammar]
         mock_run.return_value = unittest.mock.Mock(returncode=0)
 
-        gen_dir = str(tmpdir.mkdir('gen'))
-        package_dir = pathlib.Path(gen_dir, 'some_grammar')
+        base_dir = str(tmpdir.mkdir('base'))
+        parent_dir = pathlib.Path(base_dir, 'parent')
+        package_dir = pathlib.Path(parent_dir, 'some_grammar')
 
-        init_file = pathlib.Path(package_dir, '__init__.py')
+        package_init_file = pathlib.Path(package_dir, '__init__.py')
+        parent_init_file = pathlib.Path(parent_dir, '__init__.py')
 
-        command.output['default'] = gen_dir
+        command.output['default'] = parent_dir
+        os.chdir(str(base_dir))
+
         command.run()
 
-        assert init_file.exists()
+        assert package_init_file.exists()
+        assert parent_init_file.exists()
 
     @unittest.mock.patch('setuptools_antlr.command.find_java')
     @unittest.mock.patch.object(AntlrCommand, '_find_antlr')
@@ -773,19 +800,24 @@ class TestAntlrCommand:
         mock_find_grammars.return_value = [grammar]
         mock_run.return_value = unittest.mock.Mock(returncode=0)
 
-        gen_dir = str(tmpdir.mkdir('gen'))
-        package_dir = pathlib.Path(gen_dir, 'some_grammar')
-        package_dir.mkdir()
+        base_dir = str(tmpdir.mkdir('base'))
+        parent_dir = pathlib.Path(base_dir, 'parent')
+        package_dir = pathlib.Path(parent_dir, 'some_grammar')
+        package_dir.mkdir(parents=True)
 
-        init_file = pathlib.Path(package_dir, '__init__.py')
-        init_file.open('wt').close()
+        package_init_file = pathlib.Path(package_dir, '__init__.py')
+        package_init_file.touch()
+        parent_init_file = pathlib.Path(parent_dir, '__init__.py')
+        parent_init_file.touch()
 
-        origin_mtime_ns = init_file.stat().st_mtime_ns
+        origin_package_init_mtime_ns = package_init_file.stat().st_mtime_ns
+        origin_parent_init_mtime_ns = parent_init_file.stat().st_mtime_ns
 
-        command.output['default'] = gen_dir
+        command.output['default'] = parent_dir
         command.run()
 
-        assert init_file.stat().st_mtime_ns == origin_mtime_ns
+        assert package_init_file.stat().st_mtime_ns == origin_package_init_mtime_ns
+        assert parent_init_file.stat().st_mtime_ns == origin_parent_init_mtime_ns
 
     @unittest.mock.patch('setuptools_antlr.command.find_java')
     @unittest.mock.patch.object(AntlrCommand, '_find_antlr')
