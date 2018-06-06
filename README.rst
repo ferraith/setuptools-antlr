@@ -163,8 +163,8 @@ To generate  parsers for all root-level grammars and build a ``foobar`` wheel pa
 
     > python setup.py antlr bdist_wheel
 
-.. |Build Status| image:: https://travis-ci.org/ferraith/setuptools-antlr.svg
-   :target: https://travis-ci.org/ferraith/setuptools-antlr
+.. |Build Status| image:: https://travis-ci.com/ferraith/setuptools-antlr.svg
+   :target: https://travis-ci.com/ferraith/setuptools-antlr
    :alt: Build Status
 
 .. |Codecov Status| image:: https://codecov.io/gh/ferraith/setuptools-antlr/branch/master/graph/badge.svg
