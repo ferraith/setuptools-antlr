@@ -167,7 +167,7 @@ To generate  parsers for all root-level grammars and build a ``foobar`` wheel pa
    :target: https://travis-ci.com/ferraith/setuptools-antlr
    :alt: Build Status
 
-.. |Coverage Status| .. image:: https://coveralls.io/repos/github/ferraith/setuptools-antlr/badge.svg?branch=master
+.. |Coverage Status| image:: https://coveralls.io/repos/github/ferraith/setuptools-antlr/badge.svg?branch=master
    :target: https://coveralls.io/github/ferraith/setuptools-antlr?branch=master
    :alt: Coverage Status
 
