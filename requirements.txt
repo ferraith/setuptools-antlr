@@ -1,4 +1,4 @@
-codecov
+coveralls
 pytest
 pytest-cov
 twine
