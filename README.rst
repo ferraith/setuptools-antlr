@@ -1,7 +1,7 @@
 setuptools-antlr
 ================
 
-|Build Status| |Codecov Status| |PyPI Status| |GitHub Releases Status|
+|Build Status| |Coverage Status| |PyPI Status| |GitHub Releases Status|
 
 A ``setuptools`` command for generating ANTLR based parsers.
 
@@ -167,9 +167,9 @@ To generate  parsers for all root-level grammars and build a ``foobar`` wheel pa
    :target: https://travis-ci.com/ferraith/setuptools-antlr
    :alt: Build Status
 
-.. |Codecov Status| image:: https://codecov.io/gh/ferraith/setuptools-antlr/branch/master/graph/badge.svg
-   :target: https://codecov.io/gh/ferraith/setuptools-antlr
-   :alt: Codecov Status
+.. |Coverage Status| .. image:: https://coveralls.io/repos/github/ferraith/setuptools-antlr/badge.svg?branch=master
+   :target: https://coveralls.io/github/ferraith/setuptools-antlr?branch=master
+   :alt: Coverage Status
 
 .. |PyPI Status| image:: https://img.shields.io/pypi/v/setuptools-antlr.svg
    :target: https://pypi.python.org/pypi/setuptools-antlr
