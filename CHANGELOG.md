@@ -8,7 +8,7 @@ adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [0.2.1] - 2018-06-15
 ### Fixed
-- Faulty detection of import statements
+- Faulty detection of import statements.
 
 ## [0.2.0] - 2018-06-02
 ### Changed
