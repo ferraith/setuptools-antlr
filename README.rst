@@ -1,7 +1,28 @@
 setuptools-antlr
 ================
 
-|Build Status| |Coverage Status| |PyPI Status| |GitHub Releases Status|
+|Build Status| |Coverage Status| |PyPI Version| |GitHub Version|
+
+.. |Build Status| image:: https://travis-ci.com/ferraith/setuptools-antlr.svg
+   :target: https://travis-ci.com/ferraith/setuptools-antlr
+   :alt: Build Status
+
+.. |Coverage Status| image:: https://coveralls.io/repos/github/ferraith/setuptools-antlr/badge.svg?branch=master
+   :target: https://coveralls.io/github/ferraith/setuptools-antlr?branch=master
+   :alt: Coverage Status
+
+.. |PyPI Version| image:: https://badge.fury.io/py/setuptools-antlr.svg
+   :target: https://pypi.org/project/setuptools-antlr
+   :alt: PyPI Version
+
+.. |GitHub Version| image:: https://badge.fury.io/gh/ferraith%2Fsetuptools-antlr.svg
+   :target: https://github.com/ferraith/setuptools-antlr/releases
+   :alt: GitHub Version
+
+.. contents:: :depth: 2
+
+Overview
+--------
 
 A ``setuptools`` command for generating ANTLR based parsers.
 
@@ -162,19 +183,3 @@ To generate  parsers for all root-level grammars and build a ``foobar`` wheel pa
 ::
 
     > python setup.py antlr bdist_wheel
-
-.. |Build Status| image:: https://travis-ci.com/ferraith/setuptools-antlr.svg
-   :target: https://travis-ci.com/ferraith/setuptools-antlr
-   :alt: Build Status
-
-.. |Coverage Status| image:: https://coveralls.io/repos/github/ferraith/setuptools-antlr/badge.svg?branch=master
-   :target: https://coveralls.io/github/ferraith/setuptools-antlr?branch=master
-   :alt: Coverage Status
-
-.. |PyPI Status| image:: https://img.shields.io/pypi/v/setuptools-antlr.svg
-   :target: https://pypi.python.org/pypi/setuptools-antlr
-   :alt: PyPI Status
-
-.. |GitHub Releases Status| image:: https://img.shields.io/github/release/ferraith/setuptools-antlr.svg
-   :target: https://github.com/ferraith/setuptools-antlr/releases
-   :alt: GitHub Releases Status
