@@ -28,7 +28,7 @@ Overview
 
 A ``setuptools`` command for generating ANTLR based parsers.
 
-This is an extension for `setuptools <https://pypi.python.org/pypi/setuptools/>`__ integrating the famous `ANTLR <http://www.antlr.org/>`__ parser generator into the Python packaging process. It encapsulates the Java based generator of ANTLR and provides the user a single command to control the generation process.
+This is an extension for `setuptools <https://pypi.org/project/setuptools/>`__ integrating the famous `ANTLR <http://www.antlr.org/>`__ parser generator into the Python packaging process. It encapsulates the Java based generator of ANTLR and provides the user a single command to control the generation process.
 
 All command line options of ANTLR are also available through the setuptools command. The user have the choice to pass the options on the command line or configure ANTLR in a dedicated section in the ``setup.cfg`` file.
 
@@ -87,7 +87,7 @@ For a smooth user experience it's recommended to pass ``setuptools-antlr`` using
         ...
     )
 
-Before generating a parser ``setuptools`` will automatically check the Python environment and download ``setuptools-antlr`` from `PyPI <https://pypi.python.org>`__ if it's missing. During the installation of the project package ``pip`` will install ``antlr4-python3-runtime`` into the Python environment.
+Before generating a parser ``setuptools`` will automatically check the Python environment and download ``setuptools-antlr`` from `PyPI <https://pypi.org>`__ if it's missing. During the installation of the project package ``pip`` will install ``antlr4-python3-runtime`` into the Python environment.
 
 Configuration
 *************
