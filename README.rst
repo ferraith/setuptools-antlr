@@ -1,7 +1,7 @@
 setuptools-antlr
 ================
 
-|Build Status| |Coverage Status| |PyPI Version| |GitHub Version|
+|Build Status| |Coverage Status| |PyPI Version| |GitHub Version| |License|
 
 .. |Build Status| image:: https://travis-ci.com/ferraith/setuptools-antlr.svg
    :target: https://travis-ci.com/ferraith/setuptools-antlr
@@ -19,7 +19,9 @@ setuptools-antlr
    :target: https://github.com/ferraith/setuptools-antlr/releases
    :alt: GitHub Version
 
-.. contents:: :depth: 2
+.. |License| image:: https://img.shields.io/github/license/ferraith/setuptools-antlr.svg
+    :target: https://raw.githubusercontent.com/ferraith/setuptools-antlr/master/LICENSE
+    :alt: License
 
 Overview
 --------
