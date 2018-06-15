@@ -41,7 +41,7 @@ class AntlrGrammar(object):
 
         :return: a list of imported grammars
         """
-        import_stmt_regex = re.compile('import(.*);')
+        import_stmt_regex = re.compile('^\s*import\s*(.*)\s*;', re.MULTILINE)
 
         try:
             with self.path.open() as f:
