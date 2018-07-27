@@ -13,7 +13,8 @@ def camel_to_snake_case(s):
     :param s: a camel cased string
     :return: a snake cased string
     """
-    snake_cased = re.sub('([a-z0-9])([A-Z])', r'\1_\2', re.sub('(.)([A-Z][a-z]+)', r'\1_\2', s)).lower()
+    snake_cased = re.sub('([a-z0-9])([A-Z])', r'\1_\2', re.sub('(.)([A-Z][a-z]+)', r'\1_\2',
+                                                               s)).lower()
     return snake_cased.replace('__', '_')
 
 
@@ -24,8 +25,8 @@ def validate_java(executable: str, min_java_version: str) -> bool:
     :param min_java_version: minimum acceptable version of Java
     :return: flag whether JRE is at minimum required version
     """
-    result = subprocess.run([executable, '-version'], stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                            universal_newlines=True)
+    result = subprocess.run([executable, '-version'], stdout=subprocess.PIPE,
+                            stderr=subprocess.STDOUT, universal_newlines=True)
 
     if result.returncode == 0:
         version_regex = re.compile('"([1-9]\d*(?:(\.0)|(\.[1-9]\d*))*(?:_\d+)?)"')
@@ -33,7 +34,8 @@ def validate_java(executable: str, min_java_version: str) -> bool:
 
         if version_match:
             # create normalized versions containing only valid chars
-            validated_version = distutils.version.LooseVersion(version_match.group(1).replace('_', '.'))
+            validated_version = distutils.version.LooseVersion(version_match.group(1).
+                                                               replace('_', '.'))
             min_version = distutils.version.LooseVersion(min_java_version.replace('_', '.'))
 
             return validated_version >= min_version

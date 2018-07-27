@@ -64,8 +64,9 @@ def test_find_java_on_path(mock_validate_java, mock_which):
     assert java_path is not None
 
 
-test_ids_validate_java = ['valid_current_schema_1', 'valid_current_schema_2', 'valid_legacy_schema_1',
-                          'valid_legacy_schema_2', 'invalid', 'deprecated', 'corrupt']
+test_ids_validate_java = ['valid_current_schema_1', 'valid_current_schema_2',
+                          'valid_legacy_schema_1', 'valid_legacy_schema_2', 'invalid', 'deprecated',
+                          'corrupt']
 
 test_data_validate_java = [
     (subprocess.CompletedProcess(['java.exe', '-version'], 0, stdout="""

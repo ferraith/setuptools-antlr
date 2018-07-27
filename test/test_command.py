@@ -54,14 +54,16 @@ class TestAntlrCommand:
 
     @pytest.fixture()
     def configured_command(self, monkeypatch, tmpdir, command):
-        command._find_antlr = unittest.mock.Mock(return_value=pathlib.Path('antlr-4.5.3-complete.jar'))
+        command._find_antlr = unittest.mock.Mock(return_value=pathlib.Path(
+                                                 'antlr-4.5.3-complete.jar'))
         command._find_grammars = unittest.mock.Mock(return_value=[
             AntlrGrammar(pathlib.Path('standalone/SomeGrammar.g4'))
         ])
         command.output['default'] = str(tmpdir.mkdir('gen'))
 
         monkeypatch.setattr(setuptools_antlr.command, 'find_java',
-                            unittest.mock.Mock(return_value=pathlib.Path('c:/path/to/java/bin/java.exe')))
+                            unittest.mock.Mock(return_value=pathlib.Path(
+                                               'c:/path/to/java/bin/java.exe')))
 
         return command
 
@@ -88,14 +90,15 @@ class TestAntlrCommand:
         with unittest.mock.patch.object(AntlrCommand, '_EXT_LIB_DIR', str(ext_lib_dir)):
             found_antlr_jar = command._find_antlr()
 
-        assert found_antlr_jar == (pathlib.Path(str(ext_lib_dir), expected_antlr_jar) if expected_antlr_jar
-                                   else None)
+        assert found_antlr_jar == (pathlib.Path(str(ext_lib_dir), expected_antlr_jar)
+                                   if expected_antlr_jar else None)
 
     test_ids_find_antlr_log = ['single', 'multiple', 'none', 'invalid']
 
     test_data_find_antlr_log = [
         ({'antlr-2016-12-19-16.01.43.log'}, 'antlr-2016-12-19-16.01.43.log'),
-        ({'antlr-2016-12-18-16.01.43.log', 'antlr-2016-12-19-16.01.43.log'}, 'antlr-2016-12-19-16.01.43.log'),
+        ({'antlr-2016-12-18-16.01.43.log', 'antlr-2016-12-19-16.01.43.log'},
+         'antlr-2016-12-19-16.01.43.log'),
         ({}, None),
         ({'foobar-2016-12-19-16.01.43.log'}, None)
     ]
@@ -111,8 +114,8 @@ class TestAntlrCommand:
 
         found_antlr_log = command._find_antlr_log(pathlib.Path(str(package_dir)))
 
-        assert found_antlr_log == (pathlib.Path(str(package_dir), expected_antlr_log) if expected_antlr_log
-                                   else None)
+        assert found_antlr_log == (pathlib.Path(str(package_dir), expected_antlr_log)
+                                   if expected_antlr_log else None)
 
     def test_find_grammars_empty(self, tmpdir, command):
         dsl_dir = tmpdir.mkdir('dsl')
@@ -280,7 +283,8 @@ class TestAntlrCommand:
     @unittest.mock.patch.object(AntlrCommand, '_find_antlr')
     @unittest.mock.patch('subprocess.run')
     @unittest.mock.patch.object(AntlrCommand, '_find_grammars')
-    def test_run_antlr_found(self, mock_find_grammars, mock_run, mock_find_antlr, mock_find_java, tmpdir, command):
+    def test_run_antlr_found(self, mock_find_grammars, mock_run, mock_find_antlr, mock_find_java,
+        tmpdir, command):
         java_exe = pathlib.Path('c:/path/to/java/bin/java.exe')
         antlr_jar = pathlib.Path('antlr-4.5.3-complete.jar')
 
@@ -694,7 +698,8 @@ class TestAntlrCommand:
     @unittest.mock.patch('subprocess.run')
     @unittest.mock.patch.object(AntlrCommand, '_find_antlr_log')
     @unittest.mock.patch('shutil.move')
-    def test_run_x_log_enabled(self, mock_move, mock_find_antlr_log, mock_run, capsys, configured_command):
+    def test_run_x_log_enabled(self, mock_move, mock_find_antlr_log, mock_run, capsys,
+        configured_command):
         log_file = 'antlr-2016-12-19-16.01.43.log'
         mock_run.return_value = unittest.mock.Mock(returncode=0)
         mock_find_antlr_log.return_value = pathlib.Path(log_file)
@@ -760,8 +765,8 @@ class TestAntlrCommand:
     @unittest.mock.patch.object(AntlrCommand, '_find_antlr')
     @unittest.mock.patch('subprocess.run')
     @unittest.mock.patch.object(AntlrCommand, '_find_grammars')
-    def test_run_package_not_exists(self, mock_find_grammars, mock_run, mock_find_antlr, mock_find_java, tmpdir,
-                                    command):
+    def test_run_package_not_exists(self, mock_find_grammars, mock_run, mock_find_antlr,
+                                    mock_find_java, tmpdir, command):
         java_exe = pathlib.Path('c:/path/to/java/bin/java.exe')
         antlr_jar = pathlib.Path('antlr-4.5.3-complete.jar')
         mock_find_java.return_value = java_exe
@@ -790,7 +795,8 @@ class TestAntlrCommand:
     @unittest.mock.patch.object(AntlrCommand, '_find_antlr')
     @unittest.mock.patch('subprocess.run')
     @unittest.mock.patch.object(AntlrCommand, '_find_grammars')
-    def test_run_package_exists(self, mock_find_grammars, mock_run, mock_find_antlr, mock_find_java, tmpdir, command):
+    def test_run_package_exists(self, mock_find_grammars, mock_run, mock_find_antlr, mock_find_java,
+                                tmpdir, command):
         java_exe = pathlib.Path('c:/path/to/java/bin/java.exe')
         antlr_jar = pathlib.Path('antlr-4.5.3-complete.jar')
         mock_find_java.return_value = java_exe
@@ -823,8 +829,8 @@ class TestAntlrCommand:
     @unittest.mock.patch.object(AntlrCommand, '_find_antlr')
     @unittest.mock.patch('subprocess.run')
     @unittest.mock.patch.object(AntlrCommand, '_find_grammars')
-    def test_run_one_library_location(self, mock_find_grammars, mock_run, mock_find_antlr, mock_find_java, tmpdir,
-                                      command):
+    def test_run_one_library_location(self, mock_find_grammars, mock_run, mock_find_antlr,
+                                      mock_find_java, tmpdir, command):
         java_exe = pathlib.Path('c:/path/to/java/bin/java.exe')
         antlr_jar = pathlib.Path('antlr-4.5.3-complete.jar')
         mock_find_java.return_value = java_exe
@@ -849,8 +855,8 @@ class TestAntlrCommand:
     @unittest.mock.patch.object(AntlrCommand, '_find_antlr')
     @unittest.mock.patch('subprocess.run')
     @unittest.mock.patch.object(AntlrCommand, '_find_grammars')
-    def test_run_multiple_library_location(self, mock_find_grammars, mock_run, mock_find_antlr, mock_find_java, tmpdir,
-                                           command):
+    def test_run_multiple_library_location(self, mock_find_grammars, mock_run, mock_find_antlr,
+                                           mock_find_java, tmpdir, command):
         java_exe = pathlib.Path('c:/path/to/java/bin/java.exe')
         antlr_jar = pathlib.Path('antlr-4.5.3-complete.jar')
         mock_find_java.return_value = java_exe
@@ -868,4 +874,5 @@ class TestAntlrCommand:
 
         with pytest.raises(distutils.errors.DistutilsOptionError) as excinfo:
             command.run()
-        assert excinfo.match('Imported grammars of \'SomeGrammar\' are located in more than one directory.')
+        assert excinfo.match('Imported grammars of \'SomeGrammar\' are located in more than one '
+                             'directory.')
