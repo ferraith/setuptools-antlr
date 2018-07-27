@@ -86,10 +86,10 @@ class AntlrCommand(setuptools.Command):
     """A setuptools command for generating ANTLR based parsers.
 
     An extra command for setuptools to generate ANTLR based parsers, lexers, listeners and visitors.
-    The antlr command wraps the Java based generator provided by ANTLR developers. It
-    searches for all grammar files and generates a Python package containing a modules specified in
-    the user options. Please keep in mind that only grammars are generated which aren't included by
-    other grammars. This prevents generation of shared content like common terminals.
+    The antlr command wraps the Java based generator provided by ANTLR developers. It searches for
+    all grammar files and generates a Python package containing a modules specified in the user
+    options. Please keep in mind that only grammars are generated which aren't included by other
+    grammars. This prevents generation of shared content like common terminals.
 
     :cvar _MIN_JAVA_VERSION: Minimal version of java required by ANTLR
     :cvar _EXT_LIB_DIR: Relative path to external libs directory
@@ -129,8 +129,9 @@ class AntlrCommand(setuptools.Command):
         ('x-log', None, 'dump lots of logging info to antlr-<timestamp>.log')
     ]
 
-    boolean_options = ['atn', 'long-messages', 'listener', 'no-listener', 'visitor', 'no-visitor', 'depend', 'w-error',
-                       'x-dbg-st', 'x-dbg-st-wait', 'x-exact-output-dir', 'x-force-atn', 'x-log']
+    boolean_options = ['atn', 'long-messages', 'listener', 'no-listener', 'visitor', 'no-visitor',
+                       'depend', 'w-error', 'x-dbg-st', 'x-dbg-st-wait', 'x-exact-output-dir',
+                       'x-force-atn', 'x-log']
 
     negative_opt = {'no-listener': 'listener', 'no-visitor': 'visitor'}
 
@@ -181,16 +182,17 @@ class AntlrCommand(setuptools.Command):
         # sanity check in case target language is explicitly passed by user
         if 'language' in self.grammar_options:
             if self.grammar_options['language'] != 'Python3':
-                raise distutils.errors.DistutilsOptionError('{} isn\'t a supported language. Only Python3 code can be '
-                                                            'generated.'.format(self.grammar_options['language']))
+                raise distutils.errors.DistutilsOptionError('{} isn\'t a supported language. Only '
+                                                            'Python3 code can be generated.'.format(
+                                                                self.grammar_options['language']))
         else:
             self.grammar_options['language'] = 'Python3'
 
         # sanity check for debugging options
         if not self.x_dbg_st and self.x_dbg_st_wait:
-            distutils.log.warn('Waiting for StringTemplate visualizer (x_dbg_st_wait) without launching it on '
-                               'generated code is enabled (x_dbg_st). Launching of StringTemplate visualizer will be '
-                               'forced.')
+            distutils.log.warn('Waiting for StringTemplate visualizer (x_dbg_st_wait) without '
+                               'launching it on generated code is enabled (x_dbg_st). Launching of '
+                               'StringTemplate visualizer will be forced.')
             self.x_dbg_st = 1
 
     def _find_antlr(self) -> pathlib.Path:
@@ -279,8 +281,9 @@ class AntlrCommand(setuptools.Command):
                         e.parent = grammar
                         raise
         except ImportGrammarError as e:
-            raise distutils.errors.DistutilsFileError('Imported grammar "{}" in file "{}" isn\'t present in package '
-                                                      'source directory.'.format(str(e), str(e.parent.path)))
+            raise distutils.errors.DistutilsFileError('Imported grammar "{}" in file "{}" isn\'t '
+                                                      'present in package source directory.'.format(
+                                                          str(e), str(e.parent.path)))
         else:
             # remove all grammars which aren't the root of a dependency tree
             grammar_tree[:] = filter(lambda r: all(r not in g.dependencies for g in grammars),
@@ -336,7 +339,8 @@ class AntlrCommand(setuptools.Command):
             run_args.append('-visitor' if self.visitor else '-no-visitor')
             if self.depend:
                 run_args.append('-depend')
-            run_args.extend(['-D{}={}'.format(option, value) for option, value in self.grammar_options.items()])
+            run_args.extend(['-D{}={}'.format(option, value) for option, value in
+                            self.grammar_options.items()])
             if self.w_error:
                 run_args.append('-Werror')
             if self.x_dbg_st:
@@ -355,9 +359,10 @@ class AntlrCommand(setuptools.Command):
             if len(dependency_dirs) == 1:
                 run_args.extend(['-lib', str(dependency_dirs.pop().absolute())])
             elif len(dependency_dirs) > 1:
-                raise distutils.errors.DistutilsOptionError('Imported grammars of \'{}\' are located in more than one '
-                                                            'directory. This isn\'t supported by ANTLR. Move all '
-                                                            'imported grammars into one'
+                raise distutils.errors.DistutilsOptionError('Imported grammars of \'{}\' are '
+                                                            'located in more than one directory. '
+                                                            'This isn\'t supported by ANTLR. Move '
+                                                            'all imported grammars into one '
                                                             'directory.'.format(grammar.name))
 
             # build up package path
@@ -369,7 +374,8 @@ class AntlrCommand(setuptools.Command):
             if self.x_exact_output_dir:
                 package_dir = pathlib.Path(output_dir)
             else:
-                package_dir = pathlib.Path(output_dir, grammar_dir, camel_to_snake_case(grammar.name))
+                package_dir = pathlib.Path(output_dir, grammar_dir,
+                                           camel_to_snake_case(grammar.name))
 
             # create package directory
             package_dir.mkdir(parents=True, exist_ok=True)
@@ -380,7 +386,8 @@ class AntlrCommand(setuptools.Command):
 
             if self.depend:
                 dependency_file = pathlib.Path(package_dir, 'dependencies.txt')
-                distutils.log.info('generating {} file dependencies -> {}'.format(grammar_file, dependency_file))
+                distutils.log.info('generating {} file dependencies -> {}'.format(grammar_file,
+                                                                                  dependency_file))
 
                 # call ANTLR for file dependency generation
                 result = subprocess.run(run_args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
@@ -405,14 +412,16 @@ class AntlrCommand(setuptools.Command):
                                         universal_newlines=True, cwd=str(grammar_dir))
                 if result.returncode:
                     raise distutils.errors.DistutilsExecError('{} parser couldn\'t be generated\n'
-                                                              '{}'.format(grammar.name, result.stdout))
+                                                              '{}'.format(grammar.name,
+                                                                          result.stdout))
 
             # move logging info into build directory
             if self.x_log:
                 antlr_log_file = self._find_antlr_log(grammar_dir)
                 if antlr_log_file:
                     package_log_file = pathlib.Path(package_dir, antlr_log_file.name)
-                    distutils.log.info('dumping logging info of {} -> {}'.format(grammar_file, package_log_file))
+                    distutils.log.info('dumping logging info of {} -> {}'.format(grammar_file,
+                                                                                 package_log_file))
                     shutil.move(str(antlr_log_file), str(package_log_file))
                 else:
                     distutils.log.warn('no logging info dumped out by ANTLR')
