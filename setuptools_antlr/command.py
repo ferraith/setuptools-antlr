@@ -110,7 +110,7 @@ class AntlrCommand(setuptools.Command):
 
     user_options = [
         ('grammars=', 'g', 'specify grammars to generate parsers for'),
-        ('output=', 'o', 'specify output directories where output is generated'),
+        ('output=', 'o', 'specify directories where output is generated'),
         ('atn', None, 'generate rule augmented transition network diagrams'),
         ('encoding=', None, 'specify grammar file encoding e.g. euc-jp'),
         ('message-format=', None, 'specify output style for messages in antlr, gnu, vs2005'),
@@ -245,7 +245,6 @@ class AntlrCommand(setuptools.Command):
 
     def _find_grammars(self, base_path: pathlib.Path=pathlib.Path('.')) -> typing.List[AntlrGrammar]:
         """Searches for all ANTLR grammars starting from base directory and returns a list of it.
-        Only grammars which aren't included by other grammars are part of this list.
 
         :param base_path: base path to search for ANTLR grammars
         :return: a list of all found ANTLR grammars
@@ -270,7 +269,6 @@ class AntlrCommand(setuptools.Command):
                 grammars.append(AntlrGrammar(pathlib.Path(root, fb)))
 
         # generate a dependency tree for each grammar
-        grammar_tree = []
         try:
             for grammar in grammars:
                 imports = grammar.read_imports()
@@ -284,12 +282,8 @@ class AntlrCommand(setuptools.Command):
             raise distutils.errors.DistutilsFileError('Imported grammar "{}" in file "{}" isn\'t '
                                                       'present in package source directory.'.format(
                                                           str(e), str(e.parent.path)))
-        else:
-            # remove all grammars which aren't the root of a dependency tree
-            grammar_tree[:] = filter(lambda r: all(r not in g.dependencies for g in grammars),
-                                     grammars)
 
-        return grammar_tree
+        return grammars
 
     @classmethod
     def _create_init_file(cls, path: pathlib.Path) -> bool:
