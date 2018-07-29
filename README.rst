@@ -175,12 +175,14 @@ Apart from passing options on the command line it's also possible to add a dedic
     # Dump lots of logging info to antlr-<timestamp>.log (yes|no); default: no
     #x-log = no
 
+A reference configuration is provided in the ``resources`` directory.
+
 Example
 *******
 
 Alongside the ``setuptools-antlr`` source code a example project called ``foobar`` is provided in the ``example`` directory. This example consists of the two ANTLR grammars ``Foo`` and ``Bar``. During the execution of ``setuptools-antlr`` two Python packages will be generated into the ``foobar`` package directory containing a parser for each grammar.
 
-To generate parsers for all grammars and build a ``foobar`` wheel package execute the following command:
+To generate parsers for both grammars and build a ``foobar`` wheel package execute the following command:
 
 ::
 
