@@ -32,7 +32,7 @@ This is an extension for `setuptools <https://pypi.org/project/setuptools/>`__ i
 
 All command line options of ANTLR are also available through the setuptools command. The user have the choice to pass the options on the command line or configure ANTLR in a dedicated section in the ``setup.cfg`` file.
 
-ANTLR grammars and its dependencies like imported grammars or token files are automatically detected. For each root-level grammar a Python package will be generated during execution of the ``antlr`` command.
+ANTLR grammars and its dependencies like imported grammars or token files are automatically detected. For each grammar a Python package will be generated during execution of the ``antlr`` command.
 
 Installation
 ------------
@@ -114,7 +114,7 @@ See ``python setup.py antlr --help`` for available command line options:
     ...
     Options for 'AntlrCommand' command:
       --grammars (-g)       specify grammars to generate parsers for
-      --output (-o)         specify output directories where output is generated
+      --output (-o)         specify directories where output is generated
       --atn                 generate rule augmented transition network diagrams
       --encoding            specify grammar file encoding e.g. euc-jp
       --message-format      specify output style for messages in antlr, gnu, vs2005
@@ -142,8 +142,8 @@ Apart from passing options on the command line it's also possible to add a dedic
 
     [antlr]
     # Specify grammars to generate parsers for; default: None
-    #grammars = <root-level grammar> [<root-level-grammar> ...]
-    # Specify output directories where all output is generated; default: ./
+    #grammars = <grammar> [<grammar> ...]
+    # Specify directories where all output is generated; default: ./
     output = default=gen
     # Generate DOT graph files that represent the internal ATN data structures (yes|no); default: no
     #atn = no
@@ -180,7 +180,7 @@ Example
 
 Alongside the ``setuptools-antlr`` source code a example project called ``foobar`` is provided in the ``example`` directory. This example consists of the two ANTLR grammars ``Foo`` and ``Bar``. During the execution of ``setuptools-antlr`` two Python packages will be generated into the ``foobar`` package directory containing a parser for each grammar.
 
-To generate  parsers for all root-level grammars and build a ``foobar`` wheel package execute the following command:
+To generate parsers for all grammars and build a ``foobar`` wheel package execute the following command:
 
 ::
 
