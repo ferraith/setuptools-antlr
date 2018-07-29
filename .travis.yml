@@ -13,8 +13,8 @@ install:
 script:
   # run unit tests
   - python setup.py test --addopts "--cov=setuptools_antlr --cov-report html"
-  # build example project
-  - pushd example
+  # build foobar sample project
+  - pushd samples/foobar
   - python setup.py antlr bdist_wheel
   - popd
 
