@@ -40,7 +40,7 @@ Installation
 ``setuptools-antlr`` can be installed in various ways. To run it the following prerequisites have to be fulfilled:
 
 - Python 3.5+
-- setuptools 29.0.0+
+- setuptools
 - Java JRE 1.7+
 
 The source distribution is already shipped with ANTLR 4.7.1. It isn't necessary to download ANTLR additionally.
@@ -180,7 +180,7 @@ A reference configuration is provided in the ``resources`` directory.
 Sample
 ******
 
-Alongside the ``setuptools-antlr`` source code a sample project called ``foobar`` is provided in the ``samples`` directory. This sample consists of the two ANTLR grammars ``Foo`` and ``Bar``. During the execution of ``setuptools-antlr`` two Python packages will be generated into the ``foobar`` package directory containing a parser for each grammar.
+Besides the ``setuptools-antlr`` source code a sample project called ``foobar`` is provided in the ``samples`` directory. This sample consists of the two ANTLR grammars ``Foo`` and ``Bar``. During the execution of ``setuptools-antlr`` two Python packages will be generated into the ``foobar`` package directory containing a parser for each grammar.
 
 To generate parsers for both grammars and build a ``foobar`` wheel package execute the following command:
 
