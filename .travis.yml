@@ -3,6 +3,7 @@ language: python
 python:
   - '3.5'
   - '3.6'
+  - '3.7'
 
 install:
   - python -m pip install -U pip setuptools
@@ -34,7 +35,7 @@ deploy:
     on:
       repo: ferraith/setuptools-antlr
       tags: true
-      python: '3.6'
+      python: '3.7'
 
   - provider: pypi
     user: ferraith
@@ -46,4 +47,4 @@ deploy:
     on:
       repo: ferraith/setuptools-antlr
       tags: true
-      python: '3.6'
+      python: '3.7'
