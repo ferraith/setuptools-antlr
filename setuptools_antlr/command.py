@@ -87,9 +87,8 @@ class AntlrCommand(setuptools.Command):
 
     An extra command for setuptools to generate ANTLR based parsers, lexers, listeners and visitors.
     The antlr command wraps the Java based generator provided by ANTLR developers. It searches for
-    all grammar files and generates a Python package containing a modules specified in the user
-    options. Please keep in mind that only grammars are generated which aren't included by other
-    grammars. This prevents generation of shared content like common terminals.
+    all grammar files. For each grammar a Python package is generated containing the modules
+    specified in the user options.
 
     :cvar _MIN_JAVA_VERSION: Minimal version of java required by ANTLR
     :cvar _EXT_LIB_DIR: Relative path to external libs directory
@@ -162,7 +161,7 @@ class AntlrCommand(setuptools.Command):
         as late as possible, ie. after any option assignments from the command-line or from other
         commands have been done.
         """
-        # parse grammars
+        # parse grammars option
         if self.grammars:
             self.grammars = shlex.split(self.grammars, comments=True)
 
