@@ -6,7 +6,7 @@ adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 ### Added
-- Python 3.7 support
+- Python 3.7 support.
 
 ## [0.3.0] - 2018-07-29
 ### Changed
