@@ -30,7 +30,7 @@ A ``setuptools`` command for generating ANTLR based parsers.
 
 This is an extension for `setuptools <https://pypi.org/project/setuptools/>`__ integrating the famous `ANTLR <http://www.antlr.org/>`__ parser generator into the Python packaging process. It encapsulates the Java based generator of ANTLR and provides the user a single command to control the generation process.
 
-All command line options of ANTLR are also available through the setuptools command. The user have the choice to pass the options on the command line or configure ANTLR in a dedicated section in the ``setup.cfg`` file.
+All command line options of ANTLR are also available through the setuptools command. The user has the choice to pass the options on the command line or configure ANTLR in a dedicated section in the ``setup.cfg`` file.
 
 ANTLR grammars and its dependencies like imported grammars or token files are automatically detected. For each grammar a Python package will be generated during execution of the ``antlr`` command.
 
