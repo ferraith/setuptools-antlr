@@ -294,7 +294,7 @@ class TestAntlrCommand:
     @unittest.mock.patch('subprocess.run')
     @unittest.mock.patch.object(AntlrCommand, '_find_grammars')
     def test_run_antlr_found(self, mock_find_grammars, mock_run, mock_find_antlr, mock_find_java,
-        tmpdir, command):
+                             tmpdir, command):
         java_exe = pathlib.Path('c:/path/to/java/bin/java.exe')
         antlr_jar = pathlib.Path('antlr-4.5.3-complete.jar')
 
@@ -709,7 +709,7 @@ class TestAntlrCommand:
     @unittest.mock.patch.object(AntlrCommand, '_find_antlr_log')
     @unittest.mock.patch('shutil.move')
     def test_run_x_log_enabled(self, mock_move, mock_find_antlr_log, mock_run, capsys,
-        configured_command):
+                               configured_command):
         log_file = 'antlr-2016-12-19-16.01.43.log'
         mock_run.return_value = unittest.mock.Mock(returncode=0)
         mock_find_antlr_log.return_value = pathlib.Path(log_file)
