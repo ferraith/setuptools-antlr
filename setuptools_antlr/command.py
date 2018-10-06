@@ -36,6 +36,13 @@ class AntlrGrammar(object):
         self.path = path
         self.dependencies = []
 
+    def __eq__(self, other):
+        return (isinstance(other, AntlrGrammar) and hash(other) == hash(self) and
+                self.dependencies == other.dependencies)
+
+    def __hash__(self):
+        return hash((self.name, self.path))
+
     def read_imports(self) -> typing.List[str]:
         """Reads all imported grammars out of grammar file.
 
