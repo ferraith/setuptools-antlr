@@ -19,9 +19,9 @@ coverage_report/
 venv/
 
 # example
-example/foobar/dsl/__init__.py
-example/foobar/dsl/bar/
-example/foobar/dsl/foo/
+samples/foobar/foobar/dsl/__init__.py
+samples/foobar/foobar/dsl/bar/
+samples/foobar/foobar/dsl/foo/
 
 # editor files
 .idea/
