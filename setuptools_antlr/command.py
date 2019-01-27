@@ -397,15 +397,8 @@ class AntlrCommand(setuptools.Command):
             else:
                 distutils.log.info('generating {} parser -> {}'.format(grammar.name, package_dir))
 
-                # create Python package including parent packages if don't exist
+                # create Python package if don't exist
                 self._create_init_file(package_dir)
-
-                base_dir = pathlib.Path('.').resolve()
-                parent_dir = package_dir.resolve().parent
-
-                while base_dir < parent_dir:
-                    self._create_init_file(parent_dir)
-                    parent_dir = parent_dir.parent
 
                 # call ANTLR for parser generation
                 result = subprocess.run(run_args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
