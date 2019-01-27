@@ -26,7 +26,7 @@ if __name__ == '__main__':
             ]
         },
         python_requires='>=3.5',
-        tests_require=['pytest'],
+        tests_require=['pytest>=3.6'],
         setup_requires=pytest_runner_opt + setuptools_lint_opt + flake8_opt,
         url='https://github.com/ferraith/setuptools-antlr',
         license='MIT',
