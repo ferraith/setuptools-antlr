@@ -780,19 +780,16 @@ class TestAntlrCommand:
         mock_run.return_value = unittest.mock.Mock(returncode=0)
 
         base_dir = str(tmpdir.mkdir('base'))
-        parent_dir = pathlib.Path(base_dir, 'parent')
-        package_dir = pathlib.Path(parent_dir, 'some_grammar')
+        package_dir = pathlib.Path(base_dir, 'some_grammar')
 
         package_init_file = pathlib.Path(package_dir, '__init__.py')
-        parent_init_file = pathlib.Path(parent_dir, '__init__.py')
 
-        command.output['default'] = parent_dir
+        command.output['default'] = base_dir
         os.chdir(str(base_dir))
 
         command.run()
 
         assert package_init_file.exists()
-        assert parent_init_file.exists()
 
     @unittest.mock.patch('setuptools_antlr.command.find_java')
     @unittest.mock.patch.object(AntlrCommand, '_find_antlr')
@@ -810,23 +807,18 @@ class TestAntlrCommand:
         mock_run.return_value = unittest.mock.Mock(returncode=0)
 
         base_dir = str(tmpdir.mkdir('base'))
-        parent_dir = pathlib.Path(base_dir, 'parent')
-        package_dir = pathlib.Path(parent_dir, 'some_grammar')
-        package_dir.mkdir(parents=True)
+        package_dir = pathlib.Path(base_dir, 'some_grammar')
+        package_dir.mkdir()
 
         package_init_file = pathlib.Path(package_dir, '__init__.py')
         package_init_file.touch()
-        parent_init_file = pathlib.Path(parent_dir, '__init__.py')
-        parent_init_file.touch()
 
         origin_package_init_mtime_ns = package_init_file.stat().st_mtime_ns
-        origin_parent_init_mtime_ns = parent_init_file.stat().st_mtime_ns
 
-        command.output['default'] = parent_dir
+        command.output['default'] = base_dir
         command.run()
 
         assert package_init_file.stat().st_mtime_ns == origin_package_init_mtime_ns
-        assert parent_init_file.stat().st_mtime_ns == origin_parent_init_mtime_ns
 
     @unittest.mock.patch('setuptools_antlr.command.find_java')
     @unittest.mock.patch.object(AntlrCommand, '_find_antlr')

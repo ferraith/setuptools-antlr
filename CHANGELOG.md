@@ -8,6 +8,8 @@ adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 ### Added
 - Python 3.7 support.
 - Equality comparison and hashing of grammars.
+### Removed
+- Generation of parent Python packages.
 
 ## [0.3.0] - 2018-07-29
 ### Changed
